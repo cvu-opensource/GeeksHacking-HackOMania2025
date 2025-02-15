@@ -32,10 +32,6 @@ app.add_middleware(
 # Initialize scheduler
 scheduler = BackgroundScheduler()
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # ------------------ Helper ------------------ 
 
 def hash_password(password):
@@ -221,7 +217,6 @@ def get_random_profiles():
     except HTTPException as e:
         raise e 
     except Exception as e:
-        logger.error(f"Random profile error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/getRandomEvents")
@@ -234,7 +229,6 @@ def get_random_events():
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Random profile error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/signUp")
@@ -266,7 +260,6 @@ def signup(request: UserDetailsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Signup error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -286,7 +279,6 @@ def login(request: LoginRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Login error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -303,7 +295,6 @@ def get_user(request: GetUserRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Update user error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -320,7 +311,6 @@ def update_user(request: UserDetailsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Update user error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -337,7 +327,6 @@ def add_friend(request: FriendshipRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add friend error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -355,7 +344,6 @@ def get_friends(request: GetUserRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get friends error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -387,7 +375,6 @@ def get_friend_recommendations(request: GetUserRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get friend recommendations error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -404,7 +391,6 @@ def remove_friend(request: FriendshipRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Remove friend error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -429,7 +415,6 @@ def add_events(request: AddEventsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -462,7 +447,6 @@ def get_event_recommendations(request: GetUserRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get friend recommendations error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -479,7 +463,6 @@ def join_events(request: JoinEventsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Join events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -496,7 +479,6 @@ def add_post(request: AddPostRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add post error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -513,7 +495,6 @@ def add_comment(request: AddCommentRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add post error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -543,23 +524,22 @@ def add_comment(request: AddCommentRequest):
 #     except HTTPException as e:
 #         raise e
 #     except Exception as e:
-#         logger.error(f"Get friend recommendations error: {e}")
 #         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-def update_events():
-    """
-    Function to update the database with events once a day based on scheduler
-    """
-    try:
-        events = em.get_events()
-        for idx, event in enumerate(events):
-            event['venue_region'] = get_nearest_region(event.get('venue_lat'), event.get('venue_long'))
-            event['type'] = 'Networking'  # how should we extract event type
-            db.create_or_update_event(event)
-            logging.info(f"Daily event {idx} update successful.")
-    except Exception as e:
-        logging.error(f"Error updating events: {e}")
+# def update_events():
+#     """
+#     Function to update the database with events once a day based on scheduler
+#     """
+#     try:
+#         events = em.get_events()
+#         for idx, event in enumerate(events):
+#             event['venue_region'] = get_nearest_region(event.get('venue_lat'), event.get('venue_long'))
+#             event['type'] = 'Networking'  # how should we extract event type
+#             db.create_or_update_event(event)
+#             logging.info(f"Daily event {idx} update successful.")
+#     except Exception as e:
+#         logging.error(f"Error updating events: {e}")
 
-# Schedule the update to run daily at midnight
-scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
-scheduler.start()
+# # Schedule the update to run daily at midnight
+# scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
+# scheduler.start()

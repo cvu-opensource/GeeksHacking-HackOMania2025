@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Navigation } from "../components/Navigation"
 
-const API_URL = "http://localhost:8000";
+const API_URL = "http://127.0.0.1:8000";
 
 // Dynamically import the Map component to avoid SSR issues
 const Map = dynamic(() => import("./Map").then((mod) => mod.default), {
@@ -49,7 +49,11 @@ const Events: NextPage = () => {
   useEffect(() => {
     async function fetchEvents() {
         try {
-            const response = await fetch(`${API_URL}/getEventRecommendations`);
+            const response = await fetch(`${API_URL}/getEventRecommendations`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: "currentUser" }),
+        });
             if (!response.ok) throw new Error("Failed to fetch events");
             const data = await response.json();
             setEvents(data.recommendations || []);
@@ -147,7 +151,7 @@ const Events: NextPage = () => {
   }
 
   const handleAddEvent = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
 
     try {
         const response = await fetch(`${API_URL}/addEvents`, {
