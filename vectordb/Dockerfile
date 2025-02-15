@@ -5,9 +5,9 @@ RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONT
 
 RUN curl -fsSL https://ollama.com/install.sh | sh
 ENV EMBEDDER=mxbai-embed-large
-ENV LLM=deepseek-r1:8b
+# ENV LLM=deepseek-r1:8b
 # replace whatever after pull with whatever you want to pull
-RUN ollama serve & sleep 5; ollama pull ${EMBEDDER}; ollama pull ${LLM}; echo "kill 'ollama serve' process"; ps -ef | grep 'ollama serve' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+RUN ollama serve & sleep 5; ollama pull ${EMBEDDER}; echo "kill 'ollama serve' process"; ps -ef | grep 'ollama serve' | grep -v grep | awk '{print $2}' | xargs -r kill -9
 
 ENV OLLAMA_HOST=127.0.0.1:11400
 ENV DB_PATH=/data
