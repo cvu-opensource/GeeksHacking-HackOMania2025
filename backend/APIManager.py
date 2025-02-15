@@ -20,7 +20,7 @@ db = DBController()
 em = EventManager()
 
 # Initialize app
-app = FastAPI()
+app = FastAPI(debug=True)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # Adjust this based on your frontend URL
@@ -290,12 +290,13 @@ def login(request: LoginRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/getUser")
+@app.post("/getUser")
 def get_user(request: GetUserRequest):
     """
     Gets user information for profile page.
     """
     try:
+        print(request)
         res = db.get_user(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
@@ -408,7 +409,7 @@ def remove_friend(request: FriendshipRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/addEvents")
+@app.post("/addEvents")
 def add_events(request: AddEventsRequest):
     """
     Creates an event from users through the UI.
@@ -561,5 +562,5 @@ def update_events():
         logging.error(f"Error updating events: {e}")
 
 # Schedule the update to run daily at midnight
-scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
-scheduler.start()
+# scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
+# scheduler.start()
