@@ -541,10 +541,6 @@ def add_comment(request: AddCommentRequest):
 #     except Exception as e:
 #         logging.error(f"Error updating events: {e}")
 
-<<<<<<< HEAD
-# # Schedule the update to run daily at midnight
-=======
 # Schedule the update to run daily at midnight
->>>>>>> 5c658464f97802db4db2d583f81420d2af17479f
 # scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
 # scheduler.start()
