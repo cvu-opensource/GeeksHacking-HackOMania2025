@@ -144,8 +144,8 @@ class UserDetailsRequest(BaseModel):
     about_me: str
     linkedin_url: str
     github_url: str
-    skills: list
-    interests: list
+    skills: List[str]
+    interests: List[str]
 
 class LoginRequest(BaseModel):
     username: str
@@ -183,16 +183,16 @@ class AddForumsRequest(BaseModel):
     datetime: str
     description: str
     code: str
-    comments: list[dict]
-    interests: list[str]
+    comments: List[Dict[str, str]]
+    interests: List[str]
 
 class AddPostRequest(BaseModel):
     title: str
     username: str
     description: str
     code: str
-    comments: list[dict]
-    interests: list[str]
+    comments: List[Dict[str, str]]
+    interests: List[str]
 
 class AddCommentRequest(BaseModel):
     title: str
