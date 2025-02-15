@@ -93,19 +93,18 @@ def get_nearest_region(latitude, longitude):
     except (TypeError, ValueError):
         return "Unknown"
 
-def make_recommendation_request(self, endpoint, data):
+def make_recommendation_request(url, data):
     """
     Function:   Handles requests made to recommendation system (aka ben).
     Input:      data: json
     Output:     res: json
     """
-    RECOMMENDATION_ENDPOINT = os.getenv("RECOMMENDATION_ENDPOINT")
     HEADERS = {
         "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
     try:
-        response = requests.get(f"{RECOMMENDATION_ENDPOINT}/{endpoint}", headers=HEADERS, timeout=10)
+        response = requests.get(url, headers=HEADERS, timeout=10)
 
         if response.status_code == 200:
             return Response(content=response.text, status_code=200, media_type="application/json")
@@ -119,6 +118,18 @@ def make_recommendation_request(self, endpoint, data):
     except requests.exceptions.RequestException as e:
         logging.error(f"Recommendation API request failed: {e}")
         return {}
+
+def access_friends_recommendation(endpoint, data):
+    return make_recommendation_request(
+        f'{os.getenv("FRIEND_RECOMMENDATION_ENDPOINT")}/{endpoint}', 
+        data
+    )
+
+def access_events_recommendation(endpoint, data):
+    return make_recommendation_request(
+        f'{os.getenv("EVENT_RECOMMENDATION_ENDPOINT")}/{endpoint}', 
+        data
+    )
 
 # ------------------ Models ------------------ 
 
@@ -212,11 +223,11 @@ def signup(request: UserDetailsRequest):
             'contents': [request.interests],
             'ids': [request.username]
         }
-        res = make_recommendation_request('store', data)
+        res = access_friends_recommendation('store', data)
         if res.status_code == 400:
             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
         if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
 
         return {'success': True, 'message': "Successfully signed up."}
     except HTTPException as e:
@@ -326,13 +337,14 @@ def get_friend_recommendations(request: GetUserRequest):
             raise HTTPException(status_code=500, detail=interests['message'])
         data = {
             'contents': interests[data],
-            'ids': [request.username]
+            'ids': [request.username],
+            'top_n': 5
         }
-        res = make_recommendation_request('retrieve', data)
+        res = access_friends_recommendation('retrieve', data)
         if res.status_code == 400:
             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
         if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
         
         recommendations = {'recommendations': []}
         for user, users in res.items():
@@ -376,14 +388,14 @@ def add_events(request: AddEventsRequest):
             raise HTTPException(status_code=400, detail=res['message'])
         
         data = {
-            'contents': [request.interests],
+            'contents': [request.model_dump()],
             'ids': [request.username]
         }
-        res = make_recommendation_request('store', data)
+        res = access_events_recommendation('store', data)
         if res.status_code == 400:
             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
         if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
 
         return res
     except HTTPException as e:
@@ -393,36 +405,37 @@ def add_events(request: AddEventsRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-# @app.get("/getEventRecommendations")
-# def get_event_recommendations(request: GetUserRequest):
-#     """
-#     Gets event recommendations for a user based on interests using similarity search algorithm.
-#     """
-#     try:
-#         interests = db.get_user_interests(request.model_dump())
-#         if not interests['success']:
-#             raise HTTPException(status_code=500, detail=interests['message'])
-#         data = {
-#             'contents': interests[data],
-#             'ids': [request.username]
-#         }
-#         res = make_recommendation_request('retrieve', data)
-#         if res.status_code == 400:
-#             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-#         if res.status_code == 500:
-#             return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+@app.get("/getEventRecommendations")
+def get_event_recommendations(request: GetUserRequest):
+    """
+    Gets event recommendations for a user based on interests using similarity search algorithm.
+    """
+    try:
+        interests = db.get_user_interests(request.model_dump())
+        if not interests['success']:
+            raise HTTPException(status_code=500, detail=interests['message'])
+        data = {
+            'contents': interests[data],
+            'ids': [request.username],
+            'top_n': 10
+        }
+        res = access_events_recommendation('retrieve', data)
+        if res.status_code == 400:
+            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
+        if res.status_code == 500:
+            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
         
-#         recommendations = {'recommendations': []}
-#         for user, users in res.items():
-#             for username, dist in users:
-#                 recommendations['recommendations'].append(db.get_user(username))
-#         recommendations['success'] = True
-#         return recommendations
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         logger.error(f"Get friend recommendations error: {e}")
-#         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        recommendations = {'recommendations': []}
+        for user, users in res.items():
+            for username, dist in users:
+                recommendations['recommendations'].append(db.get_user(username))
+        recommendations['success'] = True
+        return recommendations
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Get friend recommendations error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.post("/joinEvents")
@@ -493,7 +506,7 @@ def add_comment(request: AddCommentRequest):
 #         if res.status_code == 400:
 #             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
 #         if res.status_code == 500:
-#             return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+#             return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
         
 #         recommendations = {'recommendations': []}
 #         for user, users in res.items():
