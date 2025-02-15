@@ -1,5 +1,5 @@
 @ECHO OFF
 TITLE BACKEND
-CD backend
 CALL venv\scripts\activate
+CD backend
 uvicorn APIManager:app --reload

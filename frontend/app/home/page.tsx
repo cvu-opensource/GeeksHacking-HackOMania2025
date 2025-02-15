@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserMinus, Upload } from "lucide-react"
 import { Navigation } from "../components/Navigation"
+
+const API_URL = "http://localhost:8000";
 
 // Mock data for Geekstagram posts
 const geekstagramPosts = [
@@ -138,8 +140,62 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState({ image: null, caption: "" })
   const [posts, setPosts] = useState(geekstagramPosts) // Added posts state
   const fileInputRef = useRef(null)
-  const [connectUsersList, setConnectUsersList] = useState(connectUsers)
-  const [currentConnectionsList, setCurrentConnectionsList] = useState(currentConnections)
+  const [connectUsersList, setConnectUsersList] = useState([]);
+  const [currentConnectionsList, setCurrentConnectionsList] = useState([]);
+
+  useEffect(() => {
+    async function fetchConnections() {
+        try {
+            const res1 = await fetch(`${API_URL}/getFriendRecommendations?username=currentUser`);
+            const res2 = await fetch(`${API_URL}/getFriends?username=currentUser`);
+
+            const data1 = await res1.json();
+            const data2 = await res2.json();
+
+            setConnectUsersList(data1.recommendations || []);
+            setCurrentConnectionsList(data2.friends || []);
+        } catch (error) {
+            console.error("Error fetching friends:", error);
+        }
+    }
+
+    fetchConnections();
+}, []);
+
+    const handleAddFriend = async (friend: string) => {
+      try {
+          await fetch(`${API_URL}/addFriend`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username1: "currentUser", username2: friend }),
+          });
+
+          // Refresh the lists after adding a friend
+          const updatedFriends = await fetch(`${API_URL}/getFriends?username=currentUser`).then(res => res.json());
+          const updatedRecommendations = await fetch(`${API_URL}/getFriendRecommendations?username=currentUser`).then(res => res.json());
+
+          setConnectUsersList(updatedRecommendations.recommendations || []);
+          setCurrentConnectionsList(updatedFriends.friends || []);
+      } catch (error) {
+          console.error("Error adding friend:", error);
+      }
+    };
+
+    const handleRemoveFriend = async (friend) => {
+      try {
+          await fetch(`${API_URL}/removeFriend`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username1: "currentUser", username2: friend }),
+          });
+  
+          // Refresh the lists after removing a friend
+          const updatedFriends = await fetch(`${API_URL}/getFriends?username=currentUser`).then(res => res.json());
+          setCurrentConnectionsList(updatedFriends.friends || []);
+      } catch (error) {
+          console.error("Error removing friend:", error);
+      }
+    };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
@@ -380,10 +436,7 @@ export default function HomePage() {
                           <CardFooter className="mt-auto">
                             <Button
                               className="w-full bg-white text-black hover:bg-gray-200"
-                              onClick={() => {
-                                setCurrentConnectionsList([...currentConnectionsList, user])
-                                setConnectUsersList(connectUsersList.filter((u) => u.name !== user.name))
-                              }}
+                              onClick={() => handleAddFriend(user.name)}
                             >
                               Connect
                             </Button>
@@ -423,12 +476,7 @@ export default function HomePage() {
                                 variant="outline"
                                 size="sm"
                                 className="text-red-500"
-                                onClick={() =>
-                                  setCurrentConnectionsList(
-                                    currentConnectionsList.filter((conn) => conn.name !== connection.name),
-                                  )
-                                }
-                              >
+                                onClick={() => handleRemoveFriend(connection.name)}>
                                 <UserMinus className="mr-2 h-4 w-4" />
                                 Remove Connection
                               </Button>

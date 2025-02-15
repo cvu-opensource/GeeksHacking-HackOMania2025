@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Navigation } from "../components/Navigation"
 
+const API_URL = "http://localhost:8000";
+
 // Dynamically import the Map component to avoid SSR issues
 const Map = dynamic(() => import("./Map").then((mod) => mod.default), {
   ssr: false,
@@ -25,77 +27,9 @@ const Map = dynamic(() => import("./Map").then((mod) => mod.default), {
 })
 
 // Mock data for events (updated with Singapore locations)
-const initialEvents = [
-  {
-    id: 1,
-    title: "AI & Machine Learning Hackathon",
-    description: "Join us for a 48-hour hackathon focused on AI and ML projects!",
-    startDate: "2023-06-15",
-    endDate: "2023-06-17",
-    time: "09:00 AM",
-    location: "National University of Singapore",
-    organizer: "TechInnovate",
-    cost: 0,
-    attendees: 150,
-    type: "Hackathon",
-    interests: ["AI", "Machine Learning", "Data Science"],
-    experienceLevel: "Intermediate",
-    image: "https://example.com/ai-hackathon.jpg",
-    prerequisites: "Basic knowledge of Python and machine learning concepts",
-    requirements: "Laptop, Python environment set up",
-    preparation: "Review basic ML algorithms and bring project ideas",
-    coordinates: [1.2966, 103.7764], // NUS coordinates
-    postalCode: "119077",
-    signupUrl: "https://example.com/signup/ai-hackathon",
-  },
-  {
-    id: 2,
-    title: "Web Development Workshop: React & Next.js",
-    description: "Learn how to build modern web applications with React and Next.js",
-    startDate: "2023-06-20",
-    endDate: "2023-06-20",
-    time: "10:00 AM",
-    location: "Singapore Management University",
-    organizer: "WebDev Experts",
-    cost: 50,
-    attendees: 100,
-    type: "Workshop",
-    interests: ["React", "Next.js", "Frontend Development"],
-    experienceLevel: "Beginner",
-    image: "https://example.com/react-workshop.jpg",
-    prerequisites: "Basic HTML, CSS, and JavaScript knowledge",
-    requirements: "Computer with Node.js installed",
-    preparation: "Set up a GitHub account and install VS Code",
-    coordinates: [1.2969, 103.8498], // SMU coordinates
-    postalCode: "178902",
-    signupUrl: "https://example.com/signup/react-workshop",
-  },
-  {
-    id: 3,
-    title: "Cybersecurity Networking Event",
-    description: "Connect with cybersecurity professionals and learn about the latest trends",
-    startDate: "2023-06-25",
-    endDate: "2023-06-25",
-    time: "06:00 PM",
-    location: "Marina Bay Sands Convention Centre",
-    organizer: "CyberGuard Association",
-    cost: 25,
-    attendees: 75,
-    type: "Networking",
-    interests: ["Cybersecurity", "Network Security", "Ethical Hacking"],
-    experienceLevel: "All Levels",
-    image: "https://example.com/cybersecurity-event.jpg",
-    prerequisites: "None",
-    requirements: "Business cards (optional)",
-    preparation: "Research current cybersecurity trends",
-    coordinates: [1.2838, 103.8591], // Marina Bay Sands coordinates
-    postalCode: "018956",
-    signupUrl: "https://example.com/signup/cybersecurity-event",
-  },
-]
+const initialEvents = [];
 
 const eventTypes = ["Hackathon", "Workshop", "Networking", "Lecture", "Tutorial", "Codefest"]
-const experienceLevels = ["Beginner", "Intermediate", "Advanced", "All Levels"]
 const interests = [
   "AI",
   "Machine Learning",
@@ -112,6 +46,20 @@ const interests = [
 const Events: NextPage = () => {
   const router = useRouter()
   const [events, setEvents] = useState(initialEvents)
+  useEffect(() => {
+    async function fetchEvents() {
+        try {
+            const response = await fetch(`${API_URL}/getEventRecommendations`);
+            if (!response.ok) throw new Error("Failed to fetch events");
+            const data = await response.json();
+            setEvents(data.recommendations || []);
+        } catch (error) {
+            console.error("Error fetching events:", error);
+        }
+    }
+
+    fetchEvents();
+}, []);
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [filters, setFilters] = useState({
@@ -198,29 +146,28 @@ const Events: NextPage = () => {
     }
   }
 
-  const handleAddEvent = (e) => {
-    e.preventDefault()
-    const newEventWithId = { ...newEvent, id: events.length + 1 }
-    setEvents([...events, newEventWithId])
-    setNewEvent({
-      title: "",
-      description: "",
-      url: "",
-      logo: null,
-      startDate: "",
-      startTime: "",
-      endDate: "",
-      endTime: "",
-      isFree: false,
-      isOnline: false,
-      type: "",
-      location: "",
-      organizer: "",
-      organizerWebsite: "",
-      interests: [],
-    })
-    setShowAddEventDialog(false)
-  }
+  const handleAddEvent = async (e) => {
+    e.preventDefault();
+
+    try {
+        const response = await fetch(`${API_URL}/addEvents`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newEvent),
+        });
+
+        if (!response.ok) throw new Error("Failed to add event");
+
+        alert("Event added successfully!");
+        setShowAddEventDialog(false);
+
+        // Refresh events list after adding new event
+        const updatedEvents = await fetch(`${API_URL}/getEventRecommendations`).then(res => res.json());
+        setEvents(updatedEvents.recommendations || []);
+    } catch (error) {
+        console.error("Error adding event:", error);
+    }
+};
 
   const clearFilters = () => {
     setFilters({
@@ -475,7 +422,7 @@ const Events: NextPage = () => {
                   {selectedEvent.startDate} - {selectedEvent.endDate} at {selectedEvent.time}
                 </div>
                 <div className="flex items-center text-[#4A5568]">
-                  <MapPin className="mr-2 h-5 w-5 text-[#48BB78]" />
+                  < Pin className="mr-2 h-5 w-5 text-[#48BB78]" />
                   {selectedEvent.location}
                 </div>
                 <div className="flex items-center text-[#4A5568]">

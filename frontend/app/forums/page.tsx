@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { Navigation } from "../components/Navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const API_URL = "http://localhost:8000";
 
 // Mock data for forum posts
 const initialPosts = [
@@ -76,7 +78,22 @@ class BinarySearchTree:
 ]
 
 export default function Forums() {
-  const [posts, setPosts] = useState(initialPosts)
+  const [posts, setPosts] = useState([])
+  useEffect(() => {
+    async function fetchPosts() {
+        try {
+            const response = await fetch(`${API_URL}/getPostRecommendations`);
+            if (!response.ok) throw new Error("Failed to fetch posts");
+            const data = await response.json();
+            setPosts(data.posts || []);
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+        }
+    }
+
+    fetchPosts();
+}, []);
+
   const [newPost, setNewPost] = useState({ title: "", content: "", code: "", tags: "", isAnonymous: false })
   const [selectedPost, setSelectedPost] = useState(null)
   const [newComment, setNewComment] = useState("")
@@ -127,11 +144,11 @@ export default function Forums() {
 
   const filteredPosts = posts.filter((post) => {
     const matchesSearch =
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesTag = selectedTag ? post.tags.includes(selectedTag) : true
-    return matchesSearch && matchesTag
-  })
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTag = selectedTag ? post.tags.includes(selectedTag) : true;
+    return matchesSearch && matchesTag;
+});
 
   const allTags = Array.from(new Set(posts.flatMap((post) => post.tags)))
 
