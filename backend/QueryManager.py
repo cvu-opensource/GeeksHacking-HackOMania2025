@@ -77,6 +77,17 @@ class QueryManager:
         """
         return self.db.execute_query(query, json)
 
+    def get_user_interests(self, json):
+        '''
+        returns user interests for specified username and threshold
+        '''
+        query = """
+            MATCH (:User {username: $username})-[r:INTERESTED_IN]->(t:Topic)
+            WHERE r.weightage > $threshold
+            RETURN t.name AS topic
+        """
+        return self.db.execute_query(query, json)
+
     def attempt_login(self, json):
         '''
         returns success if a user with specified username and password is found
@@ -87,6 +98,31 @@ class QueryManager:
         """
         return self.db.execute_query(query, json)
     
+    def create_friendship(self, json):
+        '''
+        creates a friend relationship between two users
+        '''
+        query = """
+            MATCH (u1:User {username: $username1})
+            MATCH (u2:User {username: $username2})
+            MERGE (u1)-[:IS_FRIENDS_WITH]->(u2)
+            MERGE (u1)<-[:IS_FRIENDS_WITH]-(u2)
+            """
+        self.db.execute_query(query, json)
+    
+    def delete_friendship(self, json):
+        '''
+        deletes a friend relationship between two users
+        '''
+        query = """
+            MATCH (:User {username: $username1})-[r1:IS_FRIENDS_WITH]->(:User {username: $username2})
+            MATCH (:User {username: $username1})<-[r2:IS_FRIENDS_WITH]-(:User {username: $username2})
+            DELETE r1
+            DELETE r2
+            """
+        self.db.execute_query(query, json)
+        
+
     def create_or_update_event(self, json):
         '''
         creates events if they don't exist 

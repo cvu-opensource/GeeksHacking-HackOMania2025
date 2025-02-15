@@ -6,6 +6,8 @@ class DBController:
     def __init__(self):
         self.qm = QueryManager()
 
+    ## USER METHODS
+
     def create_user(self, json):
         '''
         Function:   Instantiates a User Node
@@ -57,7 +59,7 @@ class DBController:
     
     def get_user(self, json):
         '''
-        Functions:  Gets public user data given username
+        Function:   Gets public user data given username
         Input:      JSON with username
         Output:     JSON with username, email, birth_date (datetime), gender, region
 		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)] 
@@ -66,6 +68,16 @@ class DBController:
         del user['password']
         user['birth_date'] = user['birth_date'].to_native()
         return user 
+    
+    def get_user_interests(self, json):
+        '''
+        Function:   Gets list of user interest based on a hardcoded threshold for model to recommend
+        Input:      JSON with username
+        Output:     JSON with list of interest
+        '''
+        json['threshold'] = 0.5
+        data = [i.data()['topic'] for i in self.qm.get_user_interests(json)]
+        return {'content': data}
 
     def attempt_login(self, json):
         '''
@@ -78,7 +90,25 @@ class DBController:
             return {'success': False}
         else:
             return {'success': True}
-        
+    
+    def create_friendship(self, json):
+        '''
+        Function:   Makes two users friends
+        Input:      JSON with username1 and username2
+        Output:     None
+        '''
+        self.qm.create_friendship(json)
+
+    def delete_friendship(self, json):
+        '''
+        Function:   Makes two users no longer friends
+        Input:      JSON with username1 and username2
+        Output:     None
+        '''
+        self.qm.delete_friendship(json)
+
+    ## EVENT METHODS
+
     def create_or_update_event(self, json):
         '''
         Function:   Creates an event if its eventid does not yet exist, else update the event
@@ -94,7 +124,7 @@ class DBController:
 
 if __name__ == "__main__":
     dbc = DBController()
-    # dbc.create_user({'username': 'test2', 
+    # dbc.create_user({'username': 'test', 
     #                 'password': 'abcdefg', 
     #                 'email': 'a', 
     #                 'birth_date': datetime.datetime.now(),
@@ -106,14 +136,14 @@ if __name__ == "__main__":
     #                 'interests': [('SoftwareEngineering', 0.8), ('OpenSourceSoftware', 0.5)],
     #                 'skills': [('SoftwareEngineering', 0.7)]})
     
-    dbc.update_user({'username': 'test2',
-                    'email': 'abc@gmail.com',
-                    'about_me': 'i ',
-                    'region': 'singapore',
-                    'linkedin_url': 'abc',
-                    'github_url': 'def',
-                    'interests': [('OpenSourceSoftware', 0.9)],
-                    'skills': [('SoftwareEngineering', 0.7)]})
+    # dbc.update_user({'username': 'test2',
+    #                 'email': 'abc@gmail.com',
+    #                 'about_me': 'i ',
+    #                 'region': 'singapore',
+    #                 'linkedin_url': 'abc',
+    #                 'github_url': 'def',
+    #                 'interests': [('OpenSourceSoftware', 0.9), ('SoftwareEngineering', 0.7), ("Music", 0.5)],
+    #                 'skills': [('SoftwareEngineering', 0.7)]})
 
     # a = dbc.attempt_login({'username': 'test2',
     #                    'password': 'abcdefg'})
@@ -142,3 +172,7 @@ if __name__ == "__main__":
     #                             "organizer_name": "Golden Mix",
     #                             "organizer_website": "https://www.instagram.com/goldenmixsg/"
     # })
+    # a = dbc.get_user_interests({'username': 'test2'})
+    # print(a)
+    # dbc.create_friendship({'username1': 'test', 'username2': 'test2'})
+    # dbc.delete_friendship({'username1': 'test', 'username2': 'test2'})
