@@ -171,6 +171,23 @@ def update_user(request: UserDetailsRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@app.get("/getUser")
+def get_events(request: GetUsersRequest):
+    """
+    Gets events to display on 'Events' page with event information.
+    """
+    try:
+        res = db.get_user({
+        })
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @app.get("/getEvents")
 def get_events(request: GetEventsRequest):
     """
@@ -178,7 +195,6 @@ def get_events(request: GetEventsRequest):
     """
     try:
         return {"success": True, "events": None}
-
     except HTTPException as e:
         raise e
     except Exception as e:
