@@ -5,6 +5,10 @@ import logging
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize classes
 from QueryManager import QueryManager
@@ -89,6 +93,25 @@ def get_nearest_region(latitude, longitude):
     except (TypeError, ValueError):
         return "Unknown"
 
+def make_recommendation_request(self, endpoint, data):
+    """
+    Function:   Handles requests made to recommendation system (aka ben).
+    Input:      data: json
+    Output:     res: json
+    """
+    RECOMMENDATION_ENDPOINT = os.getenv("RECOMMENDATION_ENDPOINT")
+    HEADERS = {
+        "Authorization": f"Bearer {self.api_key}",
+        "Accept": "application/json"
+    }
+    try:
+        response = requests.get(f"RECOMMENDATION_ENDPOINT/{endpoint}", headers=HEADERS, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Recommendation API request failed: {e}")
+        return {}
+
 # ------------------ Models ------------------ 
 
 class UserDetailsRequest(BaseModel):
@@ -135,6 +158,9 @@ class AddEventsRequest(BaseModel):
     venue_location: str
     organizer_name: str
     organizer_website: str
+
+class GetFriendRecommendations(BaseModel):
+    username: str
 
 # ------------------ Routes ------------------
 
@@ -247,7 +273,7 @@ def get_friends(request: GetUserRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Update user error: {e}")
+        logger.error(f"Get friends error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -281,6 +307,7 @@ def add_events(request: AddEventsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
+        logger.error(f"Add events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
  
@@ -297,6 +324,7 @@ def get_events(request: GetEventsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
+        logger.error(f"Get events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -313,12 +341,35 @@ def join_events(request: JoinEventsRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
+        logger.error(f"Join events error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/getFriendRecommendations")
+def get_friend_recommendations(request: GetFriendRecommendations):
+    """
+    Gets friend recommendations for a user based on interests using similarity search algorithm (cosine?).
+    """
+    try:
+        interests = qm.get_user(request.dict())
+        if not interests['success']:
+            raise HTTPException(status_code=400, detail=interests['message'])
+        data = {
+            'contents': [interests['interests']],
+            'ids': [request.username]
+        }
+        recommendations = make_recommendation_request(data)
+        return res
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Get friend recommendations error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 def update_events():
     """
-    Function to update the database with events once a day.
+    Function to update the database with events once a day based on scheduler
     """
     try:
         events = em.get_events()
