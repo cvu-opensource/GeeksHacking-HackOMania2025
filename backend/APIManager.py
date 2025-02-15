@@ -12,7 +12,7 @@ load_dotenv()
 
 # Initialize classes
 from DBController import DBController
-from EventManager import EventManager
+from EventsManager import EventManager
 db = DBController()
 em = EventManager()
 
@@ -224,11 +224,8 @@ def signup(request: UserDetailsRequest):
             'ids': [request.username]
         }
         res = access_friends_recommendation('store', data)
-        if res.status_code == 400:
-            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-        if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
-
+        if res.status_code != 200:
+            return res
         return {'success': True, 'message': "Successfully signed up."}
     except HTTPException as e:
         raise e
@@ -341,10 +338,8 @@ def get_friend_recommendations(request: GetUserRequest):
             'top_n': 5
         }
         res = access_friends_recommendation('retrieve', data)
-        if res.status_code == 400:
-            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-        if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
+        if res.status_code != 200:
+            return res
         
         recommendations = {'recommendations': []}
         for user, users in res.items():
@@ -392,12 +387,9 @@ def add_events(request: AddEventsRequest):
             'ids': [request.username]
         }
         res = access_events_recommendation('store', data)
-        if res.status_code == 400:
-            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-        if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
-
-        return res
+        if res.status_code != 200:
+            return res
+        return {'success': True, 'message': "Events added successfully."}
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -420,10 +412,8 @@ def get_event_recommendations(request: GetUserRequest):
             'top_n': 10
         }
         res = access_events_recommendation('retrieve', data)
-        if res.status_code == 400:
-            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-        if res.status_code == 500:
-            return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
+        if res.status_code != 200:
+            return res
         
         recommendations = {'recommendations': []}
         for user, users in res.items():
@@ -503,10 +493,8 @@ def add_comment(request: AddCommentRequest):
 #             'ids': [request.username]
 #         }
 #         res = make_recommendation_request('retrieve', data)
-#         if res.status_code == 400:
-#             return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
-#         if res.status_code == 500:
-#             return raise HTTPException(status_code=500, detail=f"Internal server error:{res.detail}")
+        # if res.status_code != 200:
+        #     return res
         
 #         recommendations = {'recommendations': []}
 #         for user, users in res.items():
