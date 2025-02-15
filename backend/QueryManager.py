@@ -37,7 +37,7 @@ class QueryManager:
         create skilled in relationship between User and Topic
         '''
         query = """
-            MATCH (u:User {username: $username})
+            MATCH (u:User {username: $username})    
             MATCH (t:Topic {name: $topic})
             CREATE (u)-[:SKILLED_IN {weightage: $weightage}]->(t)
         """
