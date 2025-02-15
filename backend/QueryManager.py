@@ -28,7 +28,7 @@ class QueryManager:
         query = """
             MATCH (u:User {username: $username})
             MATCH (t:Topic {name: $topic})
-            CREATE (u)-[:INTERESTED_IN]->(t)
+            CREATE (u)-[:INTERESTED_IN {weightage: $weightage}]->(t)
         """
         self.db.execute_query(query, json)
 
@@ -39,7 +39,7 @@ class QueryManager:
         query = """
             MATCH (u:User {username: $username})
             MATCH (t:Topic {name: $topic})
-            CREATE (u)-[:SKILLED_IN]->(t)
+            CREATE (u)-[:SKILLED_IN {weightage: $weightage}]->(t)
         """
         self.db.execute_query(query, json)
 
@@ -86,3 +86,42 @@ class QueryManager:
             RETURN u.username
         """
         return self.db.execute_query(query, json)
+    
+    def create_or_update_event(self, json):
+        '''
+        creates events if they don't exist 
+        '''
+        query = """
+            MERGE (e:Event {eventid: $eventid})
+            SET e.name = $name
+            SET e.description = $description 
+            SET e.url = $url 
+            SET e.logo = $logo
+            SET e.starttime_local = $starttime_local
+            SET e.endtime_local = $endtime_local 
+            SET e.is_free = $is_free
+            SET e.is_online = $is_online
+            SET e.venue_address = $venue_address
+            SET e.venue_lat = $venue_lat
+            SET e.venue_long = $venue_long
+            SET e.venue_region = $venue_region
+            SET e.organizer_name = $organizer_name 
+            SET e.organizer_website = $organizer_website
+        """
+        self.db.execute_query(query, json)
+    
+    def create_event_to_topic(self, json):
+        query = """
+            MATCH (e:Event {eventid: $eventid})
+            MERGE (t:Topic {name: $category})
+            MERGE (e)-[:CATEGORISED_AS]->(t)
+        """
+        self.db.execute_query(query, json)
+
+    def create_event_to_type(self, json):
+        query = """
+            MATCH (e:Event {eventid: $eventid})
+            MERGE (ty:Type {name: $type})
+            MERGE (e)-[:IS_OF_TYPE]->(ty)
+        """
+        self.db.execute_query(query, json)

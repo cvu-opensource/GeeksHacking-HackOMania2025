@@ -69,7 +69,7 @@ class DBController:
 
     def attempt_login(self, json):
         '''
-        Functions:  Attempts login using a username and password
+        Function:   Attempts login using a username and password
         Input:      JSON with username and password (hashed)
         Output:     JSON with success (boolean)
         '''
@@ -78,6 +78,19 @@ class DBController:
             return {'success': False}
         else:
             return {'success': True}
+        
+    def create_or_update_event(self, json):
+        '''
+        Function:   Creates an event if its eventid does not yet exist, else update the event
+        Input:      JSON with eventid, name, description, url, logo, starttime_local, endtime_local, is_free, 
+                    is_online, category, venue_address, venue_lat, venue_long, venue_region,
+                    organizer_name, organizer_website
+        Output:     None
+        '''
+        self.qm.create_or_update_event(json)
+        self.qm.create_event_to_topic(json)
+        self.qm.create_event_to_type(json)
+
 
 if __name__ == "__main__":
     dbc = DBController()
@@ -93,14 +106,14 @@ if __name__ == "__main__":
     #                 'interests': [('SoftwareEngineering', 0.8), ('OpenSourceSoftware', 0.5)],
     #                 'skills': [('SoftwareEngineering', 0.7)]})
     
-    # dbc.update_user({'username': 'test2',
-    #                 'email': 'abc@gmail.com',
-    #                 'about_me': 'i ',
-    #                 'region': 'singapore',
-    #                 'linkedin_url': 'abc',
-    #                 'github_url': 'def',
-    #                 'interests': [('OpenSourceSoftware', 0.9)],
-    #                 'skills': [('SoftwareEngineering', 0.7)]})
+    dbc.update_user({'username': 'test2',
+                    'email': 'abc@gmail.com',
+                    'about_me': 'i ',
+                    'region': 'singapore',
+                    'linkedin_url': 'abc',
+                    'github_url': 'def',
+                    'interests': [('OpenSourceSoftware', 0.9)],
+                    'skills': [('SoftwareEngineering', 0.7)]})
 
     # a = dbc.attempt_login({'username': 'test2',
     #                    'password': 'abcdefg'})
@@ -110,3 +123,22 @@ if __name__ == "__main__":
     # print(b)
 
     # print(dbc.get_user({'username': 'test2'}))
+
+    # dbc.create_or_update_event({"eventid": "ed",
+    #                             "name": "Golden Mix Vol.9",
+    #                             "type": "Networking",
+    #                             "description": "Golden Mix Vol.9  -  Singapore’s largest Anikura (アニクラ) event",
+    #                             "url": f"https://www.eventbrite.sg/e/golden-mix-vol9-tickets-1146639231809",
+    #                             "logo": f"https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F932993673%2F264956113191%2F1%2Foriginal.20250111-033640?h=200&w=450&auto=format%2Ccompress&q=75&sharp=10&rect=4%2C0%2C1272%2C636&s=0c9458b04f6c325c39ab19712acf9c30",
+    #                             "starttime_local": "2025-02-15T22:30:00",
+    #                             "endtime_local": "2025-02-16T02:30:00",
+    #                             "is_free": False,
+    #                             "is_online": False,
+    #                             "category": "Music",
+    #                             "venue_address": "8 Grange Road #05-01, Singapore, 239695",
+    #                             "venue_lat": "1.301527",
+    #                             "venue_long": "103.8363441",
+    #                             "venue_region": "South",
+    #                             "organizer_name": "Golden Mix",
+    #                             "organizer_website": "https://www.instagram.com/goldenmixsg/"
+    # })
