@@ -1,4 +1,5 @@
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 import logging
@@ -18,6 +19,13 @@ em = EventManager()
 
 # Initialize app
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Adjust this based on your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Initialize scheduler
 scheduler = BackgroundScheduler()
@@ -440,6 +448,8 @@ def get_event_recommendations(request: GetUserRequest):
         res = access_events_recommendation('retrieve', data)
         if res.status_code != 200:
             return res
+        
+        print(interests, "interests")
         
         recommendations = {'recommendations': []}
         for user, users in res.items():
