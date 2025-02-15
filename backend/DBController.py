@@ -121,6 +121,78 @@ class DBController:
         self.qm.create_event_to_topic(json)
         self.qm.create_event_to_type(json)
 
+    def get_events(self):
+        '''
+        Function:   Get events 
+        Input:      None
+        Output:     JSON of events (list of dict)
+        '''
+        data = [i.data() for i in self.qm.get_events()]
+        for i in data:
+            i['e']['type'] = i['type']
+            i['e']['category'] = i['topic']
+        return [i['e'] for i in data]
+    
+    ## THREADS
+
+    def create_thread(self, json):
+        '''
+        Function:   Create a new thread
+        Input:      JSON with title username description code interest (list of string)
+        Output:     None
+        '''
+        json['datetime'] = datetime.datetime.now()
+        self.qm.create_thread(json)
+        self.qm.create_thread_to_user(json)
+        for i in json['interests']:
+            th = {}
+            th['title'] = json['title']
+            th['topic'] = i
+            self.qm.create_thread_to_topic(th)
+    
+    def create_comment(self, json):
+        '''
+        Function:   Create comments for thread
+        Input:      JSON with title, username, description
+        Output:     None
+        '''
+        json['datetime'] = datetime.datetime.now()
+        self.qm.create_comment(json)
+
+    def get_thread(self, json):
+        '''
+        Function:   Gets details of one thread
+        Input:      JSON with title
+        Output:     JSON with stuff
+        '''
+        th = [i.data() for i in self.qm.get_thread(json)]
+        c = [i.data() for i in self.qm.get_comments_from_thread(json)]
+        t = [i.data() for i in self.qm.get_topics_from_thread(json)]
+
+        out = th[0]['th']
+        out['datetime'] = out['datetime'].to_native()
+        out['username'] = th[0]['username']
+        out['comments'] = []
+        for i in c:
+            out2 = i['c']
+            out2['username'] = i['username']
+            out2['datetime'] = out2['datetime'].to_native()
+            out['comments'].append(out2)
+        
+        out['interests'] = []
+        for i in t:
+            out['interests'].append(i['name'])
+
+        return out
+
+    def get_threads(self):
+        '''
+        Function:   Gets all threads and their creator
+        Input:      None
+        Output:     JSON with threads which is a list of dict with title and username
+        '''
+        data = [i.data() for i in self.qm.get_threads()]
+        return {'threads': data}
 
 if __name__ == "__main__":
     dbc = DBController()
@@ -176,3 +248,18 @@ if __name__ == "__main__":
     # print(a)
     # dbc.create_friendship({'username1': 'test', 'username2': 'test2'})
     # dbc.delete_friendship({'username1': 'test', 'username2': 'test2'})
+    # print(dbc.get_events())
+    # dbc.create_thread({
+    #     "title": 'test',
+    #     "username": 'test',
+    #     "description": "i ",
+    #     "code": "str",
+    #     "interests": ["SoftwareEngineering"]
+    # })
+    # dbc.create_comment({
+    #     "title": 'test',
+    #     "username": "test2",
+    #     "description": "aaa"
+    # })
+    # print(dbc.get_thread({'title': 'test'}))
+    # print(dbc.get_threads())
