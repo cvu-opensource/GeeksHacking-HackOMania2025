@@ -178,7 +178,6 @@ class AddForumsRequest(BaseModel):
 class AddPostRequest(BaseModel):
     title: str
     username: str
-    datetime: str
     description: str
     code: str
     comments: list[dict]
@@ -187,8 +186,7 @@ class AddPostRequest(BaseModel):
 class AddCommentRequest(BaseModel):
     title: str
     username: str
-    comment: str
-    datetime: str
+    description: str
 
 # ------------------ Routes ------------------
 
@@ -376,6 +374,17 @@ def add_events(request: AddEventsRequest):
         res = db.create_or_update_event(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
+        
+        data = {
+            'contents': [request.interests],
+            'ids': [request.username]
+        }
+        res = make_recommendation_request('store', data)
+        if res.status_code == 400:
+            return raise HTTPException(status_code=400, detail=f"Client error: {res.detail}")
+        if res.status_code == 500:
+            return raise HTTPException(status_code=500, detail=f"internal server error:{res.detail}")
+
         return res
     except HTTPException as e:
         raise e
@@ -439,7 +448,7 @@ def add_post(request: AddPostRequest):
     Creates a post for the forum page.
     """
     try:
-        res = db.create_post(request.model_dump())
+        res = db.create_thread(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
@@ -469,9 +478,9 @@ def add_comment(request: AddCommentRequest):
 
 # @app.get("/getPosts")
 # def get_posts(request: GetUserRequest):
-    # """
-    # Gets post recommendations for the forum page using a recommendation system?.
-    # """
+#     """
+#     Gets post recommendations for the forum page using a recommendation system?.
+#     """
 #     try:
 #         interests = db.get_user_interests(request.model_dump())
 #         if not interests['success']:
