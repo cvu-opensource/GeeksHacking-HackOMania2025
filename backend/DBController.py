@@ -104,7 +104,6 @@ class DBController:
             res = self.qm.attempt_login(json)
             return {"success": len(res) > 0}
         except Exception as e:
-            logger.error(f"Error attempting login: {e}")
             return {"success": False, "message": str(e)}
 
     def create_friendship(self, json):
