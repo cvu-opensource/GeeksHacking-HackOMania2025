@@ -1,11 +1,13 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
+from typing import List, Dict
 import logging
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
 from dotenv import load_dotenv
+from typing import List, Dict
 
 # Load environment variables
 load_dotenv()
