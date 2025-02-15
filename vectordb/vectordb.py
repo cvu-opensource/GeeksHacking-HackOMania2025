@@ -13,9 +13,9 @@ class VectorDB:
     embed it and do a query against the vector DB, to find closest interests.
     """
 
-    def __init__(self, db_path, collection_name, ollama_model, distance_type='ip'):
+    def __init__(self, db_path, collection_name, embedder, distance_type='ip'):
         """
-        TODO: document this.
+        TODO: document this. HAHA jk!
         """
         DIR = os.path.dirname(os.path.abspath(__file__))
         DB_PATH = os.path.join(DIR, db_path)
@@ -26,25 +26,22 @@ class VectorDB:
                 'hnsw:space':distance_type
             }
         )
+        self.distance_type = distance_type
 
         # categories_file = "./database/categories.txt"
-        # self.ollama_model = "mxbai-embed-large"
-        self.ollama_model = ollama_model
+        # self.embedder = "mxbai-embed-large"
+        self.embedder = embedder
 
-    def add(self, id, query, metadatas=None):
+    def add(self, id, query: str, metadatas=None):
         """
         Boilerplate embedding function.
-        We choose to index embeddings by their text, instead of some numbering system.
-        This is rather silly, but the plus side is if you want to replace an entry,
-        the index-embedding relationship wont be affected.
-        I'm too tired to think this through further soooo bye
 
         Params:
             - id: string to indentify embedding by.
-            - query: list of strings to embed. So currently only supports one query.
+            - query: strings to embed.
             - metadatas: emtadata to store alonside the query
         """
-        response = ollama.embed(model=self.ollama_model, input=query)
+        response = ollama.embed(model=self.embedder, input=query)
         embeddings = response["embeddings"] 
         self.collection.add(
             ids=id,
@@ -53,48 +50,32 @@ class VectorDB:
             metadatas=metadatas,
         )
 
-    # def add_from_dict(self, dict):
-    #     """
-    #     Assumes that keys are super categories and values are lists of things to embed.
-    #     """
-    #     for category in dict:
-    #         list_to_embed = dict[category]
-    #         for text in list_to_embed:
-    #             self.add(text, {'category': category}) # not we index by text. This is usually stupid, but if you ever replace the record, the
-    #             # id-embedding pairing should still be correct lol
-
-    # def add_from_nested_list(self, nested_list):
-    #     """
-    #     Monsterously useless function to add list of lists of strings into db.
-    #     """
-    #     for list in nested_list:
-    #         concatenated = ' '.join(list)
-    #         self.add(concatenated, metadatas=None)
-
-    def retrieve(self, queries: str, condition_dict=None, top_n=5, distance_type='cosine'):
+    def retrieve(self, query: str, condition_dict=None, top_n=5, distance_type=None):
         """
         Boilerplate code to take an un-embedded query, and search it against the db.
         """
-        queries = ollama.embed(model=self.ollama_model, input=queries)
+        if distance_type is None:
+            distance_type = self.distance_type
+        query = ollama.embed(model=self.embedder, input=query)
 
         results = self.collection.query(
-            query_embeddings=queries['embeddings'],
+            query_embeddings=query['embeddings'],
             n_results=top_n,
             where=condition_dict,
             # distance_type=distance_type
         )
         return results
     
-    def retrieve_distance_text_pairs(self, query:str, condition_dict=None, top_n=5, distance_type='cosine'):
+    def retrieve_distance_text_pairs(self, query:str, condition_dict=None, top_n=5, distance_type=None):
         """
-        Function to call retrieve and organise distances for you.
-        TODO: UPDATE THIS DOCUMENTATION
+        Wrapper function to call retrieve and organise distances for you.
+
         Params:
-            - queries: list of list of strings (many queries so its flexible and we call retrieve anyways)
-            - condition_dict & top_n: To pass to retrieve method
+            - queries: string
+            - condition_dict & top_n & distance_type: To pass to retrieve method
         
         Returns:
-            - pairs: dict, key is query text, values are list of pairs of reponses and their distances.
+            - pairs: list of lists, inner list is [id, distance] since thats prolly what they care about
         """
         results = self.retrieve(query, condition_dict, top_n, distance_type)
         nested_ids = results['ids'] # [['657', '677', etc]]

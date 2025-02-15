@@ -2,5 +2,7 @@
 
 # 3 seperate commands 
 ollama serve & \
-ollama run ${OLLAMA_MODEL} & \
-python3 maincontrollervectordb.py 
+ollama run ${EMBEDDER} & \
+ollama run ${LLM} & \
+python3 MainControllerVectorDB.py & \
+python3 MainControllerEventsDB.py \

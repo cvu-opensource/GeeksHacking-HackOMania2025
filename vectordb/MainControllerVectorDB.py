@@ -14,21 +14,22 @@ app = FastAPI()
 class Query(BaseModel):
     contents: List[List[str]]
     top_n: Optional[int] = None
+    condition_dict: Optional[dict] = None # tel the boys about this?
     ids: list[str]
 
 @app.on_event("startup")
 async def startup():
     # Access environment variables
-    DB_PATH = os.getenv("DB_PATH", "mxbai-embed-large")
+    DB_PATH = os.getenv("DB_PATH", "./data")
     COLLECTION_NAME = os.getenv("COLLECTION_NAME", "sequence_interest")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mxbai-embed-large")
+    EMBEDDER = os.getenv("EMBEDDER", "mxbai-embed-large")
     DISTANCE_TYPE = os.getenv("DISTANCE_TYPE", "ip")
 
     global VECTORDB # horrible!
     # We assume ollama is running defaultly on the host machine
-    VECTORDB = VectorDB(db_path=DB_PATH, collection_name=COLLECTION_NAME, ollama_model=OLLAMA_MODEL, distance_type=DISTANCE_TYPE)
+    VECTORDB = VectorDB(db_path=DB_PATH, collection_name=COLLECTION_NAME, embedder=EMBEDDER, distance_type=DISTANCE_TYPE)
     
-    print(f"OLLAMA_MODEL from environment: {OLLAMA_MODEL}")
+    print(f"EMBEDDER from environment: {EMBEDDER}")
 
 # Health check endpoint
 @app.get("/health")
@@ -57,4 +58,4 @@ def store(query: Query):
 
 # Main entry point for running the app
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("MainControllerVectorDB:app", host="0.0.0.0", port=8000, reload=True)
