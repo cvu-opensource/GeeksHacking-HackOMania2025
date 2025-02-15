@@ -201,6 +201,32 @@ class AddCommentRequest(BaseModel):
 
 # ------------------ Routes ------------------
 
+@app.get("/getRandomProfiles")
+def get_random_profiles():
+    """
+    Gets random profiles to show on the holding page.
+    """
+    try:
+        return {'success': True, 'message': "Successfully signed up."}
+    except HTTPException as e:
+        raise e 
+    except Exception as e:
+        logger.error(f"Random profile error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/getRandomEvents")
+def get_random_events():
+    """
+    Gets random events to show on the holding page.
+    """
+    try:
+        return {'success': True, 'message': "Successfully signed up."}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Random profile error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @app.post("/signUp")
 def signup(request: UserDetailsRequest):
     """
