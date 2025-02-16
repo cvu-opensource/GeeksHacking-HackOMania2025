@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Navigation } from "../components/Navigation"
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "http://localhost:8000";
 
 // Dynamically import the Map component to avoid SSR issues
 const Map = dynamic(() => import("./Map").then((mod) => mod.default), {
@@ -150,13 +150,32 @@ const Events: NextPage = () => {
   }
 
   const handleAddEvent = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
+
+    // Ensure API request body follows correct structure
+    const eventPayload = {
+      eventid: 0,  // API requires this, default to 0
+      event_name: newEvent.title || "",
+      event_description: newEvent.description || "",
+      event_url: newEvent.url || "",
+      event_logo: newEvent.logo || "", // Ensure valid image URL or empty string
+      starttime_local: `${newEvent.startDate}T${newEvent.startTime}:00Z`,  // Ensure correct time format
+      endtime_local: `${newEvent.endDate}T${newEvent.endTime}:00Z`,
+      is_free: newEvent.isFree ? "true" : "false", // Convert to expected string format
+      is_online: newEvent.isOnline ? "true" : "false",
+      category: newEvent.type || "",
+      venue_location: newEvent.location || "",
+      organizer_name: newEvent.organizer || "",
+      organizer_website: newEvent.organizerWebsite || ""
+  };
+
+  console.log("Submitting event:", eventPayload); // Debugging output
 
     try {
         const response = await fetch(`${API_URL}/addEvents`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newEvent),
+            body: JSON.stringify(eventPayload),
         });
 
         if (!response.ok) throw new Error("Failed to add event");
@@ -566,75 +585,91 @@ const Events: NextPage = () => {
                   />
                 </div>
               </div>
+
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="isFree"
-                  checked={newEvent.isFree}
-                  onCheckedChange={(checked) => setNewEvent({ ...newEvent, isFree: checked })}
-                />
-                <Label htmlFor="isFree">Free Event</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isOnline"
-                  checked={newEvent.isOnline}
-                  onCheckedChange={(checked) => setNewEvent({ ...newEvent, isOnline: checked })}
-                />
-                <Label htmlFor="isOnline">Online Event</Label>
-              </div>
+              <Label htmlFor="isFree" className="text-white">Free Event</Label>
+              <Switch
+                id="isFree"
+                checked={newEvent.isFree}
+                onCheckedChange={(checked) => setNewEvent({ ...newEvent, isFree: checked })}
+                className="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-gray-400 transition-all duration-200
+                          peer-checked:bg-[#D2B48C] bg-transparent"
+              >
+                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-5" />
+              </Switch>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="isOnline" className="text-white">Online Event</Label>
+              <Switch
+                id="isOnline"
+                checked={newEvent.isOnline}
+                onCheckedChange={(checked) => setNewEvent({ ...newEvent, isOnline: checked })}
+                className="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-gray-400 transition-all duration-200
+                          peer-checked:bg-[#D2B48C] bg-transparent"
+              >
+                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-5" />
+              </Switch>
+            </div>
+
               <div className="space-y-2">
-                <Label htmlFor="type">Category</Label>
-                <Select value={newEvent.type} onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {eventTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="interests">Interests</Label>
-                <Select
-                  value={newEvent.interests[0] || ""} // Updated: Select now takes the first interest or ""
-                  onValueChange={(value) => setNewEvent({ ...newEvent, interests: [value] })} // Updated: onValueChange now sets interests to [value]
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select interests" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {interests
-                      .filter((interest) => !newEvent.interests.includes(interest))
-                      .map((interest) => (
-                        <SelectItem key={interest} value={interest}>
-                          {interest}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {newEvent.interests.map((interest) => (
-                    <Badge key={interest} variant="secondary" className="bg-[#D2B48C] text-[#2D3748]">
-                      {interest}
-                      <button
-                        className="ml-1 text-xs"
-                        onClick={() =>
-                          setNewEvent({
-                            ...newEvent,
-                            interests: newEvent.interests.filter((i) => i !== interest),
-                          })
-                        }
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+            <Label htmlFor="type">Category</Label>
+            <Select value={newEvent.type} onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-white text-gray-800">
+                {eventTypes.map((type) => (
+                  <SelectItem key={type} value={type} className="bg-white text-gray-800 hover:bg-gray-200">
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+  <Label htmlFor="interests">Interests</Label>
+  <Select
+    onValueChange={(value) => {
+      if (!newEvent.interests.includes(value)) {
+        setNewEvent({ ...newEvent, interests: [...newEvent.interests, value] }); // ✅ Append instead of replacing
+      }
+    }}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select interests" />
+    </SelectTrigger>
+    <SelectContent className="bg-white text-gray-800">
+      {interests
+        .filter((interest) => !newEvent.interests.includes(interest))
+        .map((interest) => (
+          <SelectItem key={interest} value={interest} className="hover:bg-gray-200">
+            {interest}
+          </SelectItem>
+        ))}
+    </SelectContent>
+  </Select>
+
+  {/* Display Selected Interests */}
+  <div className="flex flex-wrap gap-2 mt-2">
+    {newEvent.interests.map((interest) => (
+      <Badge key={interest} variant="secondary" className="bg-[#D2B48C] text-[#2D3748]">
+        {interest}
+        <button
+          className="ml-1 text-xs"
+          onClick={() =>
+            setNewEvent({
+              ...newEvent,
+              interests: newEvent.interests.filter((i) => i !== interest), // ✅ Remove interest when clicked
+            })
+          }
+        >
+          ×
+        </button>
+      </Badge>
+    ))}
+  </div>
+</div>
               <div className="space-y-2">
                 <Label htmlFor="location">Venue</Label>
                 <Input

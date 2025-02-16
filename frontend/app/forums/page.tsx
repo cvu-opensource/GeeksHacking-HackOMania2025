@@ -87,10 +87,19 @@ export default function Forums() {
           headers: { "Content-Type": "application/json" },
         });
   
-        if (!response.ok) throw new Error("Failed to fetch posts");
+        console.log("Response status:", response.status); // Debugging
+        console.log("Response:", response); // Log full response
+  
+        if (!response.ok) {
+          const errorText = await response.text(); // Read the error message from backend
+          throw new Error(`Failed to fetch posts: ${errorText}`);
+        }
   
         const data = await response.json();
-        setPosts(data.posts || []); // Ensure posts are correctly set
+        console.log("Fetched Posts:", data); // Log API response
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
+  
+        setPosts(data.posts || []);
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
@@ -98,6 +107,7 @@ export default function Forums() {
   
     fetchPosts();
   }, []);
+  
 
   const [newPost, setNewPost] = useState({ title: "", content: "", code: "", tags: "", isAnonymous: false })
   const [selectedPost, setSelectedPost] = useState(null)
