@@ -81,18 +81,23 @@ export default function Forums() {
   const [posts, setPosts] = useState([])
   useEffect(() => {
     async function fetchPosts() {
-        try {
-            const response = await fetch(`${API_URL}/getPostRecommendations`);
-            if (!response.ok) throw new Error("Failed to fetch posts");
-            const data = await response.json();
-            setPosts(data.posts || []);
-        } catch (error) {
-            console.error("Error fetching posts:", error);
-        }
+      try {
+        const response = await fetch(`${API_URL}/getPostRecommendations?username=currentUser`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+  
+        if (!response.ok) throw new Error("Failed to fetch posts");
+  
+        const data = await response.json();
+        setPosts(data.posts || []); // Ensure posts are correctly set
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
     }
-
+  
     fetchPosts();
-}, []);
+  }, []);
 
   const [newPost, setNewPost] = useState({ title: "", content: "", code: "", tags: "", isAnonymous: false })
   const [selectedPost, setSelectedPost] = useState(null)
@@ -142,6 +147,45 @@ export default function Forums() {
     }
   }
 
+  const handleAddEvent = async (e) => {
+    e.preventDefault();
+  
+    const formattedEvent = {
+      eventid: Math.floor(Math.random() * 10000), // Generate random ID if not provided
+      event_name: newEvent.title,
+      event_description: newEvent.description,
+      event_url: newEvent.url,
+      event_logo: newEvent.logo || "/placeholder.svg",
+      starttime_local: `${newEvent.startDate}T${newEvent.startTime}`,
+      endtime_local: `${newEvent.endDate}T${newEvent.endTime}`,
+      is_free: newEvent.isFree ? "true" : "false",
+      is_online: newEvent.isOnline ? "true" : "false",
+      category: newEvent.type,
+      venue_location: newEvent.location,
+      organizer_name: newEvent.organizer,
+      organizer_website: newEvent.organizerWebsite,
+    };
+  
+    try {
+      const response = await fetch(`${API_URL}/addEvents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formattedEvent),
+      });
+  
+      if (!response.ok) throw new Error("Failed to add event");
+  
+      alert("Event added successfully!");
+      setShowAddEventDialog(false);
+  
+      // Refresh event list
+      const updatedEvents = await fetch(`${API_URL}/getEventRecommendations?username=currentUser`).then(res => res.json());
+      setEvents(updatedEvents.recommendations || []);
+    } catch (error) {
+      console.error("Error adding event:", error);
+    }
+  };
+  
   const filteredPosts = posts.filter((post) => {
     const matchesSearch =
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
