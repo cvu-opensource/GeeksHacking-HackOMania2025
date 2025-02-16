@@ -504,33 +504,41 @@ def add_comment(request: AddCommentRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-# @app.get("/getPosts")
-# def get_posts(request: GetUserRequest):
-#     """
-#     Gets post recommendations for the forum page using a recommendation system?.
-#     """
-#     try:
-#         interests = db.get_user_interests(request.model_dump())
-#         if not interests['success']:
-#             raise HTTPException(status_code=500, detail=interests['message'])
-#         data = {
-#             'contents': interests[data],
-#             'ids': [request.username]
-#         }
-#         res = make_recommendation_request('retrieve', data)
+@app.get("/getPostRecommendations")
+def get_post_recommendations(request: GetUserRequest):
+    """
+    Gets post recommendations for the forum page using a recommendation system? (unimplemented).
+    """
+    try:
+        # Temporary implementation  
+        threads = db.get_threads()
+        if not threads['success']:
+            raise HTTPException(status_code=500, detail=interests['message'])
+        return threads 
+
+        # If we implement recommendation system for posts one day;
+
+        # interests = db.get_user_interests(request.model_dump())
+        # if not interests['success']:
+        #     raise HTTPException(status_code=500, detail=interests['message'])
+        # data = {
+        #     'contents': interests[data],
+        #     'ids': [request.username]
+        # }
+        # res = make_recommendation_request('retrieve', data)
         # if res.status_code != 200:
         #     return res
         
-#         recommendations = {'recommendations': []}
-#         for user, users in res.items():
-#             for username, dist in users:
-#                 recommendations['recommendations'].append(db.get_user(username))
-#         recommendations['success'] = True
-#         return recommendations
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        # recommendations = {'recommendations': []}
+        # for user, users in res.items():
+        #     for username, dist in users:
+        #         recommendations['recommendations'].append(db.get_user(username))
+        # recommendations['success'] = True
+        # return recommendations
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # def update_events():
 #     """
