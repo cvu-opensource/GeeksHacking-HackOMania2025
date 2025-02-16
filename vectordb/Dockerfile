@@ -16,7 +16,7 @@ ENV DISTANCE_TYPE=ip
 EXPOSE 8000 8001
 WORKDIR /vectordb
 
-RUN pip install chromadb ollama fastapi uvicorn pydantic openai langchain-ollama langchain
+RUN pip install chromadb ollama fastapi uvicorn pydantic openai langchain-ollama langchain pydantic
 # change copy location later if need be
 COPY . /vectordb 
 

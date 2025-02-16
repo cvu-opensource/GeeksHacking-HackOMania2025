@@ -58,4 +58,4 @@ def store(query: Query):
 
 # Main entry point for running the app
 if __name__ == "__main__":
-    uvicorn.run("MainControllerVectorDB:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("MainControllerVectorDB:app", host="localhost", port=8002, reload=True)
