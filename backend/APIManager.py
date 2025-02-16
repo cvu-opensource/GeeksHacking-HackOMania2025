@@ -250,6 +250,7 @@ def signup(request: UserDetailsRequest):
 
         user_data = request.model_dump()
         user_data['password'] = hash_password(request.password)
+        user_data['birth_date'] = datetime.strptime(user_data['birth_date'], '%d/%m/%y')
 
         res = db.create_user(user_data)
         if not res['success']:

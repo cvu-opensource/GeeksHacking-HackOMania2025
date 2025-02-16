@@ -2,6 +2,7 @@ import numpy as np
 import random
 import requests
 import pydantic
+from faker import Faker
 from pydantic import BaseModel
 from typing import List, Optional
 from faker import Faker
@@ -32,7 +33,19 @@ with open(categories_file, 'r') as f:
 
 ai_generated_profiles = [] # legit way of making ai profiles lol
 for i in range(500):
-    ai_generated_profiles.append(sample_strings_from_dict(contents, 6))
+    ai_generated_profiles.append({
+        'username':Faker().name(),
+        'password': str(random.getrandbits(16)),
+        'email':'user@user.user',
+        'skills':['python'],
+        'github_url':'checkpoint214159@gmail.com',
+        'linkedin_url':'linkedin@inlinked.links',
+        'about_me':'stress',
+        'region':'bishan',
+        'gender':'coder',
+        'birth_date':'09/10/04',
+        'interests':sample_strings_from_dict(contents, 6),
+    })
     with open('im_cooked.txt', 'w') as f:
         f.write(str(ai_generated_profiles))
 

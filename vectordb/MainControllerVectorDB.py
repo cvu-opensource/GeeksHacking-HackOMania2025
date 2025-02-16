@@ -20,8 +20,8 @@ class Query(BaseModel):
 @app.on_event("startup")
 async def startup():
     # Access environment variables
-    DB_PATH = os.getenv("DB_PATH", "./data")
-    COLLECTION_NAME = os.getenv("COLLECTION_NAME", "sequence_interest")
+    DB_PATH = "/vectordb/interest_data"
+    COLLECTION_NAME = "interests"
     EMBEDDER = os.getenv("EMBEDDER", "mxbai-embed-large")
     DISTANCE_TYPE = os.getenv("DISTANCE_TYPE", "ip")
 
