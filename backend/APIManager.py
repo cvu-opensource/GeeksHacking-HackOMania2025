@@ -443,8 +443,6 @@ def get_event_recommendations(request: GetUserRequest):
         if res.status_code != 200:
             return res
         
-        print(interests, "interests")
-        
         recommendations = {'recommendations': []}
         for user, users in res.items():
             for username, dist in users:
