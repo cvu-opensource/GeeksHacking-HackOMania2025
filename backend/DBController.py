@@ -1,6 +1,7 @@
 from QueryManager import QueryManager
 import datetime
 import neo4j.time
+import random
 
 class DBController:
     def __init__(self):
@@ -18,18 +19,18 @@ class DBController:
         try:
             self.qm.create_user(json)
 
-            for topic, weightage in json.get("interests", []):
+            for topic in json.get("interests", []):
                 self.qm.create_user_interested_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
-            for topic, weightage in json.get("skills", []):
+            for topic in json.get("skills", []):
                 self.qm.create_user_skilled_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
             return {"success": True, "message": "User created successfully"}
@@ -40,25 +41,25 @@ class DBController:
         '''
         Function:   Updates fields of a User Node
         Input:      JSON with username, email, region
-		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)]
+		            about_me, linkedin_url, github_url,  interests: [name of topic], skills: [(<same as interests>)]
         Output:     None
         '''
         try:
             self.qm.update_user(json)
             self.qm.delete_user_interests_skills(json)
 
-            for topic, weightage in json.get("interests", []):
+            for topic in json.get("interests", []):
                 self.qm.create_user_interested_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
-            for topic, weightage in json.get("skills", []):
+            for topic in json.get("skills", []):
                 self.qm.create_user_skilled_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
             return {"success": True, "message": "User updated successfully."}
@@ -70,7 +71,7 @@ class DBController:
         Function:   Gets public user data given username
         Input:      JSON with username
         Output:     JSON with username, email, birth_date (datetime), gender, region
-		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)] 
+		            about_me, linkedin_url, github_url,  interests: [name of topic], skills: [(<same as interests>)] 
         '''
         try:
             user = self.qm.get_user(json)[0].data()["u"]
@@ -103,6 +104,29 @@ class DBController:
         try:
             res = self.qm.attempt_login(json)
             return {"success": len(res) > 0}
+        except Exception as e:
+            logger.error(f"Error attempting login: {e}")
+            return {"success": False, "message": str(e)}
+    
+    def get_random_users(self):
+        '''
+        Function:   Gets 4 random users
+        Input:      None
+        Output:     JSON with 4 random users
+        '''
+        try:
+            users = [i.data()['username'] for i in self.qm.get_usernames()]
+            indices = set()
+            max_loop = 1000
+            for _ in range(max_loop):
+                if len(indices) >= 4: break
+                indices.add(random.randint(0, len(users) - 1))
+            
+            userdata = [self.qm.get_user({'username': users[i]})[0].data()['u'] for i in indices]
+            
+            for ud in userdata:
+                ud.pop("password", None)
+            return {"success": True, "data": {"users": [userdata[i] for i in indices]}}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
@@ -164,6 +188,23 @@ class DBController:
         except Exception as e:
             return {"success": False, "message": str(e)}
     
+    def get_random_events(self):
+        '''
+        Function:   Gets 5 random events
+        Input:      None
+        Output:     JSON of events
+        '''
+        try:
+            events = self.get_events()["events"]
+            indices = set()
+            max_loop = 1000
+            for _ in range(max_loop):
+                if len(indices) >= 5: break
+                indices.add(random.randint(0, len(events) - 1))
+            return {'success': True, 'data': {'events': [events[i] for i in indices]}}
+        except Exception as e: 
+            return {"success": False, "message": str(e)}
+
     ## THREADS
 
     def create_thread(self, json):
@@ -236,76 +277,9 @@ class DBController:
         '''
         try:
             data = [thread.data() for thread in self.qm.get_threads()]
-            return {'success': True, 'comment': 'Threads retrieved successfully', 'threads': output}
+            return {'success': True, 'comment': 'Threads retrieved successfully', 'threads': data}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
 if __name__ == "__main__":
-    dbc = DBController()
-    # dbc.create_user({'username': 'test', 
-    #                 'password': 'abcdefg', 
-    #                 'email': 'a', 
-    #                 'birth_date': datetime.datetime.now(),
-    #                 'gender': 'others',
-    #                 'region': 'malaysia',
-    #                 'about_me': 'i ',
-    #                 'linkedin_url': 'abc',
-    #                 'github_url': 'def',
-    #                 'interests': [('SoftwareEngineering', 0.8), ('OpenSourceSoftware', 0.5)],
-    #                 'skills': [('SoftwareEngineering', 0.7)]})
-    
-    # dbc.update_user({'username': 'test2',
-    #                 'email': 'abc@gmail.com',
-    #                 'about_me': 'i ',
-    #                 'region': 'singapore',
-    #                 'linkedin_url': 'abc',
-    #                 'github_url': 'def',
-    #                 'interests': [('OpenSourceSoftware', 0.9), ('SoftwareEngineering', 0.7), ("Music", 0.5)],
-    #                 'skills': [('SoftwareEngineering', 0.7)]})
-
-    # a = dbc.attempt_login({'username': 'test2',
-    #                    'password': 'abcdefg'})
-    # b = dbc.attempt_login({'username': 'test2',
-    #                    'password': 'a'})
-    # print(a)
-    # print(b)
-
-    # print(dbc.get_user({'username': 'test2'}))
-
-    # dbc.create_or_update_event({"eventid": "ed",
-    #                             "name": "Golden Mix Vol.9",
-    #                             "type": "Networking",
-    #                             "description": "Golden Mix Vol.9  -  Singapore’s largest Anikura (アニクラ) event",
-    #                             "url": f"https://www.eventbrite.sg/e/golden-mix-vol9-tickets-1146639231809",
-    #                             "logo": f"https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F932993673%2F264956113191%2F1%2Foriginal.20250111-033640?h=200&w=450&auto=format%2Ccompress&q=75&sharp=10&rect=4%2C0%2C1272%2C636&s=0c9458b04f6c325c39ab19712acf9c30",
-    #                             "starttime_local": "2025-02-15T22:30:00",
-    #                             "endtime_local": "2025-02-16T02:30:00",
-    #                             "is_free": False,
-    #                             "is_online": False,
-    #                             "category": "Music",
-    #                             "venue_address": "8 Grange Road #05-01, Singapore, 239695",
-    #                             "venue_lat": "1.301527",
-    #                             "venue_long": "103.8363441",
-    #                             "venue_region": "South",
-    #                             "organizer_name": "Golden Mix",
-    #                             "organizer_website": "https://www.instagram.com/goldenmixsg/"
-    # })
-    # a = dbc.get_user_interests({'username': 'test2'})
-    # print(a)
-    # dbc.create_friendship({'username1': 'test', 'username2': 'test2'})
-    # dbc.delete_friendship({'username1': 'test', 'username2': 'test2'})
-    # print(dbc.get_events())
-    # dbc.create_thread({
-    #     "title": 'test',
-    #     "username": 'test',
-    #     "description": "i ",
-    #     "code": "str",
-    #     "interests": ["SoftwareEngineering"]
-    # })
-    # dbc.create_comment({
-    #     "title": 'test',
-    #     "username": "test2",
-    #     "description": "aaa"
-    # })
-    # print(dbc.get_thread({'title': 'test'}))
-    # print(dbc.get_threads())
+    pass

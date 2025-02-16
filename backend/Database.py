@@ -5,8 +5,8 @@ class Database:
     Database handles interaction with the Neo4j database
     '''
     def __init__(self):
-        self.URL = 'neo4j://localhost'
-        self.AUTH = ('neo4j', 'Password1')
+        self.URL = 'neo4j://127.0.0.1'
+        self.AUTH = ('neo4j', 'P@ssword1')
         self.driver = GraphDatabase.driver(self.URL, auth = self.AUTH)
     
     def execute_query(self, query, params):

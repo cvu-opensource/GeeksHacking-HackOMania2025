@@ -9,6 +9,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
 from dotenv import load_dotenv
 from typing import List, Dict
+import os
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -106,7 +108,7 @@ def make_recommendation_request(url, data):
     Output:     res: json
     """
     HEADERS = {
-        "Authorization": f"Bearer {self.api_key}",
+        # "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
     try:
@@ -212,7 +214,10 @@ def get_random_profiles():
     Gets random profiles to show on the holding page.
     """
     try:
-        return {'success': True, 'message': "Successfully signed up."}
+        res = db.get_random_users()
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
     except HTTPException as e:
         raise e 
     except Exception as e:
@@ -224,7 +229,10 @@ def get_random_events():
     Gets random events to show on the holding page.
     """
     try:
-        return {'success': True, 'message': "Successfully signed up."}
+        res = db.get_random_events()
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -498,33 +506,41 @@ def add_comment(request: AddCommentRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-# @app.get("/getPosts")
-# def get_posts(request: GetUserRequest):
-#     """
-#     Gets post recommendations for the forum page using a recommendation system?.
-#     """
-#     try:
-#         interests = db.get_user_interests(request.model_dump())
-#         if not interests['success']:
-#             raise HTTPException(status_code=500, detail=interests['message'])
-#         data = {
-#             'contents': interests[data],
-#             'ids': [request.username]
-#         }
-#         res = make_recommendation_request('retrieve', data)
+@app.get("/getPostRecommendations")
+def get_post_recommendations(request: GetUserRequest):
+    """
+    Gets post recommendations for the forum page using a recommendation system? (unimplemented).
+    """
+    try:
+        # Temporary implementation  
+        threads = db.get_threads()
+        if not threads['success']:
+            raise HTTPException(status_code=500, detail=interests['message'])
+        return threads 
+
+        # If we implement recommendation system for posts one day;
+
+        # interests = db.get_user_interests(request.model_dump())
+        # if not interests['success']:
+        #     raise HTTPException(status_code=500, detail=interests['message'])
+        # data = {
+        #     'contents': interests[data],
+        #     'ids': [request.username]
+        # }
+        # res = make_recommendation_request('retrieve', data)
         # if res.status_code != 200:
         #     return res
         
-#         recommendations = {'recommendations': []}
-#         for user, users in res.items():
-#             for username, dist in users:
-#                 recommendations['recommendations'].append(db.get_user(username))
-#         recommendations['success'] = True
-#         return recommendations
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        # recommendations = {'recommendations': []}
+        # for user, users in res.items():
+        #     for username, dist in users:
+        #         recommendations['recommendations'].append(db.get_user(username))
+        # recommendations['success'] = True
+        # return recommendations
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # def update_events():
 #     """
