@@ -108,11 +108,10 @@ def make_recommendation_request(url, data):
     Output:     res: json
     """
     HEADERS = {
-        # "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
+        response = requests.get(url, data, headers=HEADERS, timeout=30)
 
         if response.status_code == 200:
             return Response(content=response.text, status_code=200, media_type="application/json")
@@ -367,7 +366,7 @@ def get_friend_recommendations(request: GetUserRequest):
         data = {
             'contents': interests[data],
             'ids': [request.username],
-            'top_n': 5
+            'top_n': 20
         }
         res = access_friends_recommendation('retrieve', data)
         if res.status_code != 200:
