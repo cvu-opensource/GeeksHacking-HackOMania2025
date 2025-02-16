@@ -111,8 +111,11 @@ def make_recommendation_request(url, data):
         # "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
+    data = {
+        
+    }
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
+        response = requests.post(url, headers=HEADERS, timeout=10)
 
         if response.status_code == 200:
             return Response(content=response.text, status_code=200, media_type="application/json")
