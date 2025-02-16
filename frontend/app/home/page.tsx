@@ -17,7 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserMinus, Upload } from "lucide-react"
 import { Navigation } from "../components/Navigation"
 
-const API_URL = "http://localhost:8000";
+const API_URL = "http://127.0.0.1:8000";
 
 // Mock data for Geekstagram posts
 const geekstagramPosts = [

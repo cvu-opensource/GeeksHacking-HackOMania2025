@@ -22,7 +22,7 @@ import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { Navigation } from "../components/Navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-const API_URL = "http://localhost:8000";
+const API_URL = "http://127.0.0.1:8000";
 
 // Mock data for forum posts
 const initialPosts = [
