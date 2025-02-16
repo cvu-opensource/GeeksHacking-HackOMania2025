@@ -1,6 +1,7 @@
 from QueryManager import QueryManager
 import datetime
 import neo4j.time
+import random
 
 class DBController:
     def __init__(self):
@@ -106,6 +107,27 @@ class DBController:
         except Exception as e:
             logger.error(f"Error attempting login: {e}")
             return {"success": False, "message": str(e)}
+    
+    def get_random_users(self):
+        '''
+        Function:   Gets 4 random users
+        Input:      None
+        Output:     JSON with 4 random users
+        '''
+        try:
+            users = [i.data()['username'] for i in self.qm.get_usernames()]
+            indices = set()
+            max_loop = 1000
+            for _ in range(max_loop):
+                if len(indices) >= 4: break
+                indices.add(random.randint(0, len(users) - 1))
+            
+            userdata = [self.qm.get_user({'username': users[i]})[0].data()['u'] for i in indices]
+            for ud in userdata:
+                ud.pop("password", None)
+            return {"success": True, "data": {"users": [self.qm.get_user({'username': users[i]})[0].data() for i in indices]}}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
     def create_friendship(self, json):
         '''
@@ -165,6 +187,23 @@ class DBController:
         except Exception as e:
             return {"success": False, "message": str(e)}
     
+    def get_random_events(self):
+        '''
+        Function:   Gets 5 random events
+        Input:      None
+        Output:     JSON of events
+        '''
+        try:
+            events = self.get_events()["events"]
+            indices = set()
+            max_loop = 1000
+            for _ in range(max_loop):
+                if len(indices) >= 5: break
+                indices.add(random.randint(0, len(events) - 1))
+            return {'success': True, 'data': {'events': [events[i] for i in indices]}}
+        except Exception as e: 
+            return {"success": False, "message": str(e)}
+
     ## THREADS
 
     def create_thread(self, json):
@@ -242,71 +281,4 @@ class DBController:
             return {"success": False, "message": str(e)}
 
 if __name__ == "__main__":
-    dbc = DBController()
-    # dbc.create_user({'username': 'test', 
-    #                 'password': 'abcdefg', 
-    #                 'email': 'a', 
-    #                 'birth_date': datetime.datetime.now(),
-    #                 'gender': 'others',
-    #                 'region': 'malaysia',
-    #                 'about_me': 'i ',
-    #                 'linkedin_url': 'abc',
-    #                 'github_url': 'def',
-    #                 'interests': [('SoftwareEngineering', 0.8), ('OpenSourceSoftware', 0.5)],
-    #                 'skills': [('SoftwareEngineering', 0.7)]})
-    
-    # dbc.update_user({'username': 'test2',
-    #                 'email': 'abc@gmail.com',
-    #                 'about_me': 'i ',
-    #                 'region': 'singapore',
-    #                 'linkedin_url': 'abc',
-    #                 'github_url': 'def',
-    #                 'interests': [('OpenSourceSoftware', 0.9), ('SoftwareEngineering', 0.7), ("Music", 0.5)],
-    #                 'skills': [('SoftwareEngineering', 0.7)]})
-
-    # a = dbc.attempt_login({'username': 'test2',
-    #                    'password': 'abcdefg'})
-    # b = dbc.attempt_login({'username': 'test2',
-    #                    'password': 'a'})
-    # print(a)
-    # print(b)
-
-    # print(dbc.get_user({'username': 'test2'}))
-
-    # dbc.create_or_update_event({"eventid": "ed",
-    #                             "name": "Golden Mix Vol.9",
-    #                             "type": "Networking",
-    #                             "description": "Golden Mix Vol.9  -  Singapore’s largest Anikura (アニクラ) event",
-    #                             "url": f"https://www.eventbrite.sg/e/golden-mix-vol9-tickets-1146639231809",
-    #                             "logo": f"https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F932993673%2F264956113191%2F1%2Foriginal.20250111-033640?h=200&w=450&auto=format%2Ccompress&q=75&sharp=10&rect=4%2C0%2C1272%2C636&s=0c9458b04f6c325c39ab19712acf9c30",
-    #                             "starttime_local": "2025-02-15T22:30:00",
-    #                             "endtime_local": "2025-02-16T02:30:00",
-    #                             "is_free": False,
-    #                             "is_online": False,
-    #                             "category": "Music",
-    #                             "venue_address": "8 Grange Road #05-01, Singapore, 239695",
-    #                             "venue_lat": "1.301527",
-    #                             "venue_long": "103.8363441",
-    #                             "venue_region": "South",
-    #                             "organizer_name": "Golden Mix",
-    #                             "organizer_website": "https://www.instagram.com/goldenmixsg/"
-    # })
-    # a = dbc.get_user_interests({'username': 'test2'})
-    # print(a)
-    # dbc.create_friendship({'username1': 'test', 'username2': 'test2'})
-    # dbc.delete_friendship({'username1': 'test', 'username2': 'test2'})
-    # print(dbc.get_events())
-    # dbc.create_thread({
-    #     "title": 'test',
-    #     "username": 'test',
-    #     "description": "i ",
-    #     "code": "str",
-    #     "interests": ["SoftwareEngineering"]
-    # })
-    # dbc.create_comment({
-    #     "title": 'test',
-    #     "username": "test2",
-    #     "description": "aaa"
-    # })
-    # print(dbc.get_thread({'title': 'test'}))
-    # print(dbc.get_threads())
+    pass
