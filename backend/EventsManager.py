@@ -43,7 +43,7 @@ class EventManager:
         category = self.get_category_name(event_data.get("category_id"))
         
         return {
-            "event_id": event_id,
+            "eventid": event_id,
             "name": event_data.get("name", {}).get("text"),
             "description": event_data.get("description", {}).get("text"),
             "url": event_data.get("url"),
