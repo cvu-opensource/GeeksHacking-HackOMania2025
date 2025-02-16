@@ -6,7 +6,7 @@ class Database:
     '''
     def __init__(self):
         self.URL = 'neo4j://localhost'
-        self.AUTH = ('neo4j', 'P@ssword1')
+        self.AUTH = ('neo4j', 'Password1')
         self.driver = GraphDatabase.driver(self.URL, auth = self.AUTH)
     
     def execute_query(self, query, params):

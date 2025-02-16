@@ -148,7 +148,6 @@ class UserDetailsRequest(BaseModel):
     password: str
     email: str
     birth_date: str
-    age: int
     gender: str
     region: str
     about_me: str
