@@ -26,6 +26,8 @@ GeekedIn follows a **microservices-based** architecture with three core services
 2. **Backend Service** – FastAPI with Neo4j for storing and managing relationships  
 3. **Recommendation Engine** – Milvus for similarity search-based recommendations  
 
+![Architecture](static/Architecture_overview.png "Architecture")
+
 ## **Future Enhancements**  
 🚀 **Potential future improvements include:**  
 - 🔎 **Thread and comment recommendations** to enhance forum engagement  
