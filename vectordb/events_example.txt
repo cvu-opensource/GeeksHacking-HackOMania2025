@@ -1,0 +1,18 @@
+{
+        "eventid": "1147838859929",
+        "eventname": "HackOMania 2025: Healthy Living For a Connected World",
+        "eventdescription": "Join our annual flagship hackathon to solve real world problems and social issue with tech! Challenge statements will be released soon.",
+        "eventurl": "https://www.eventbrite.sg/e/hackomania-2025-healthy-living-for-a-connected-world-tickets-1147838859929",
+        "eventlogo": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F933109433%2F182929728854%2F1%2Foriginal.20250111-134920?crop=focalpoint&fit=crop&h=200&w=450&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=54850b5f712d66df79e2438a4e7d635d",
+        "starttime_local": "2025-02-15T10:30:00",
+        "endtime_local": "2025-02-16T17:30:00",
+        "is_free": true,
+        "is_online": false,
+        "category": "Science & Technology",
+        "venue_address": "138 Market Street, #29-03/04 CapitaGreen, Singapore 048946",
+        "venue_lat": "1.2818026",
+        "venue_long": "103.8501248",
+        "venue_location": "South",
+        "organizer_name": "GeeksHacking",
+        "organizer_website": "https://www.geekshacking.com"
+    },
