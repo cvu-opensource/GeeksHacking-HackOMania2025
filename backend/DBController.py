@@ -19,18 +19,18 @@ class DBController:
         try:
             self.qm.create_user(json)
 
-            for topic, weightage in json.get("interests", []):
+            for topic in json.get("interests", []):
                 self.qm.create_user_interested_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
-            for topic, weightage in json.get("skills", []):
+            for topic in json.get("skills", []):
                 self.qm.create_user_skilled_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
             return {"success": True, "message": "User created successfully"}
@@ -41,25 +41,25 @@ class DBController:
         '''
         Function:   Updates fields of a User Node
         Input:      JSON with username, email, region
-		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)]
+		            about_me, linkedin_url, github_url,  interests: [name of topic], skills: [(<same as interests>)]
         Output:     None
         '''
         try:
             self.qm.update_user(json)
             self.qm.delete_user_interests_skills(json)
 
-            for topic, weightage in json.get("interests", []):
+            for topic in json.get("interests", []):
                 self.qm.create_user_interested_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
-            for topic, weightage in json.get("skills", []):
+            for topic in json.get("skills", []):
                 self.qm.create_user_skilled_topic({
                     "username": json["username"],
                     "topic": topic,
-                    "weightage": weightage
+                    "weightage": 1
                 })
 
             return {"success": True, "message": "User updated successfully."}
@@ -71,7 +71,7 @@ class DBController:
         Function:   Gets public user data given username
         Input:      JSON with username
         Output:     JSON with username, email, birth_date (datetime), gender, region
-		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)] 
+		            about_me, linkedin_url, github_url,  interests: [name of topic], skills: [(<same as interests>)] 
         '''
         try:
             user = self.qm.get_user(json)[0].data()["u"]

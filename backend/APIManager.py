@@ -9,6 +9,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
 from dotenv import load_dotenv
 from typing import List, Dict
+import os
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -106,7 +108,7 @@ def make_recommendation_request(url, data):
     Output:     res: json
     """
     HEADERS = {
-        "Authorization": f"Bearer {self.api_key}",
+        # "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
     try:
