@@ -20,6 +20,7 @@ class VectorDB:
         DIR = os.path.dirname(os.path.abspath(__file__))
         DB_PATH = os.path.join(DIR, db_path)
         self.client = chromadb.PersistentClient(path=DB_PATH, settings=Settings(allow_reset=True, anonymized_telemetry=False))
+        print(DB_PATH, "DB PATH !!!!")
         self.collection = self.client.get_or_create_collection(
             name=collection_name, 
             metadata={
@@ -43,6 +44,7 @@ class VectorDB:
         """
         response = ollama.embed(model=self.embedder, input=query)
         embeddings = response["embeddings"] 
+        # print("EMBEDDINGS???", embeddings)
         self.collection.add(
             ids=id,
             embeddings=embeddings,

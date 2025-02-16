@@ -9,6 +9,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
 from dotenv import load_dotenv
 from typing import List, Dict
+import os
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -106,11 +108,17 @@ def make_recommendation_request(url, data):
     Output:     res: json
     """
     HEADERS = {
-        "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
+    data = {
+        
+    }
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
+<<<<<<< HEAD
+        response = requests.post(url, headers=HEADERS, timeout=10)
+=======
+        response = requests.get(url, data, headers=HEADERS, timeout=30)
+>>>>>>> dev
 
         if response.status_code == 200:
             return Response(content=response.text, status_code=200, media_type="application/json")
@@ -248,12 +256,12 @@ def signup(request: UserDetailsRequest):
 
         user_data = request.model_dump()
         user_data['password'] = hash_password(request.password)
-        user_data['birth_date'] = user_data['birth_date']
+        user_data['birth_date'] = datetime.strptime(user_data['birth_date'], '%d/%m/%y')
 
         res = db.create_user(user_data)
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
-            
+
         data = {
             'contents': [request.interests],
             'ids': [request.username]
@@ -365,7 +373,7 @@ def get_friend_recommendations(request: GetUserRequest):
         data = {
             'contents': interests[data],
             'ids': [request.username],
-            'top_n': 5
+            'top_n': 20
         }
         res = access_friends_recommendation('retrieve', data)
         if res.status_code != 200:
@@ -441,8 +449,6 @@ def get_event_recommendations(request: GetUserRequest):
         res = access_events_recommendation('retrieve', data)
         if res.status_code != 200:
             return res
-        
-        print(interests, "interests")
         
         recommendations = {'recommendations': []}
         for user, users in res.items():

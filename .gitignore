@@ -6,6 +6,7 @@ backend/__pycache__
 
 # Files
 *.json
+*sqlite3
 
 # Others
 test.py
