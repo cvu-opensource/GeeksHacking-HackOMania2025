@@ -1,0 +1,11 @@
+# cd into vectordb directory, then run the following:
+
+docker build -t ollama_vectordb:1.0 .
+mkdir data
+docker run -it --gpus=all -v .\data:/vectordb/data -p 8000:8000 -p 8001:8001 ollama_vectordb:1.0
+# gerard can call me from here on out
+
+# container is created, server runs interactive. create a new command line and execute into it instead:
+docker exec -it <container_name> /bin/bash
+python populate_db_fakely.py # to populate and prod the DB making sure everything is normal.
+# sit back and enjoy, or if things die, dont call me :D
