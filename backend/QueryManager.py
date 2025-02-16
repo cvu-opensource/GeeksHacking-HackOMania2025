@@ -37,7 +37,7 @@ class QueryManager:
         create skilled in relationship between User and Topic
         '''
         query = """
-            MATCH (u:User {username: $username})
+            MATCH (u:User {username: $username})    
             MATCH (t:Topic {name: $topic})
             CREATE (u)-[:SKILLED_IN {weightage: $weightage}]->(t)
         """
@@ -161,3 +161,82 @@ class QueryManager:
             MERGE (e)-[:IS_OF_TYPE]->(ty)
         """
         self.db.execute_query(query, json)
+
+    def get_events(self):
+        query = """
+            MATCH (e:Event)
+            MATCH (e)-[:CATEGORISED_AS]->(t:Topic)
+            MATCH (e)-[:IS_OF_TYPE]->(ty:Type)
+            RETURN e, t.name AS topic, ty.name AS type
+        """
+        return self.db.execute_query(query, {})
+    
+    def create_thread(self, json):
+        query = """
+            CREATE (th:Thread {
+                title: $title, datetime: $datetime, description: $description,
+                code: $code 
+            })
+        """
+        self.db.execute_query(query, json)
+    
+    def create_thread_to_user(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (u:User {username: $username})
+            CREATE (th)-[:CREATED_BY]->(u)
+        """
+        self.db.execute_query(query, json)
+
+    def create_thread_to_topic(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (t:Topic {name: $topic})
+            CREATE (th)-[:RELATED_TO]->(t)
+        """
+        self.db.execute_query(query, json)
+
+    def create_comment(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (u:User {username: $username})
+            CREATE (c:Comment {
+                datetime: $datetime, description: $description
+            })
+            CREATE (c)-[:CREATED_BY]->(u)
+            CREATE (c)-[:BELONGS_TO]->(th)
+        """
+        self.db.execute_query(query, json)
+    
+    def get_thread(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (th)-[:CREATED_BY]->(u:User)
+            RETURN th, u.username AS username
+        """
+        return self.db.execute_query(query, json)
+    
+    def get_comments_from_thread(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (c:Comment)-[:BELONGS_TO]->(th)
+            MATCH (c)-[:CREATED_BY]->(u:User)
+            RETURN c, u.username AS username
+        """
+        return self.db.execute_query(query, json)
+    
+    def get_topics_from_thread(self, json):
+        query = """
+            MATCH (th:Thread {title: $title})
+            MATCH (th)<-[:RELATED_TO]->(t:Topic)
+            RETURN t.name AS name
+        """
+        return self.db.execute_query(query, json)
+    
+    def get_threads(self):
+        query = """
+            MATCH (th:Thread)
+            MATCH (th)-[:CREATED_BY]->(u:User)
+            RETURN th.title AS title, u.username AS username
+        """
+        return self.db.execute_query(query, {})

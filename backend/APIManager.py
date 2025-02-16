@@ -1,30 +1,36 @@
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
+from typing import List, Dict
 import logging
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from bcrypt import hashpw, gensalt, checkpw
 from dotenv import load_dotenv
+from typing import List, Dict
 
 # Load environment variables
 load_dotenv()
 
 # Initialize classes
-from QueryManager import QueryManager
-from EventManager import EventManager
-qm = QueryManager()
+from DBController import DBController
+from EventsManager import EventManager
+db = DBController()
 em = EventManager()
 
 # Initialize app
-app = FastAPI()
+app = FastAPI(debug=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Adjust this based on your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Initialize scheduler
 scheduler = BackgroundScheduler()
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # ------------------ Helper ------------------ 
 
@@ -93,24 +99,43 @@ def get_nearest_region(latitude, longitude):
     except (TypeError, ValueError):
         return "Unknown"
 
-def make_recommendation_request(self, endpoint, data):
+def make_recommendation_request(url, data):
     """
     Function:   Handles requests made to recommendation system (aka ben).
     Input:      data: json
     Output:     res: json
     """
-    RECOMMENDATION_ENDPOINT = os.getenv("RECOMMENDATION_ENDPOINT")
     HEADERS = {
         "Authorization": f"Bearer {self.api_key}",
         "Accept": "application/json"
     }
     try:
-        response = requests.get(f"RECOMMENDATION_ENDPOINT/{endpoint}", headers=HEADERS, timeout=10)
-        response.raise_for_status()
-        return response.json()
+        response = requests.get(url, headers=HEADERS, timeout=10)
+
+        if response.status_code == 200:
+            return Response(content=response.text, status_code=200, media_type="application/json")
+        elif response.status_code == 400:
+            return Response(content=response.text, status_code=400, media_type="application/json")
+        elif response.status_code == 500:
+            return Response(content=response.text, status_code=500, media_type="application/json")
+        else:
+            return Response(content=f"Unexpected error: {response.text}", status_code=response.status_code, media_type="application/json")
+
     except requests.exceptions.RequestException as e:
         logging.error(f"Recommendation API request failed: {e}")
         return {}
+
+def access_friends_recommendation(endpoint, data):
+    return make_recommendation_request(
+        f'{os.getenv("FRIEND_RECOMMENDATION_ENDPOINT")}/{endpoint}', 
+        data
+    )
+
+def access_events_recommendation(endpoint, data):
+    return make_recommendation_request(
+        f'{os.getenv("EVENT_RECOMMENDATION_ENDPOINT")}/{endpoint}', 
+        data
+    )
 
 # ------------------ Models ------------------ 
 
@@ -118,14 +143,14 @@ class UserDetailsRequest(BaseModel):
     username: str
     password: str
     email: str
-    age: int
+    birth_date: str
     gender: str
     region: str
-    skills: list
-    interests: list
     about_me: str
     linkedin_url: str
     github_url: str
+    skills: List[str]
+    interests: List[str]
 
 class LoginRequest(BaseModel):
     username: str
@@ -134,18 +159,16 @@ class LoginRequest(BaseModel):
 class GetUserRequest(BaseModel):
     username: str
 
-class FriendRequest(BaseModel):
-    username: str
-    friend: str
-
-class GetEventsRequest(BaseModel):
-    None
+class FriendshipRequest(BaseModel):
+    username1: str
+    username2: str
 
 class JoinEventsRequest(BaseModel):
     username: str
     event_id: str
 
 class AddEventsRequest(BaseModel):
+    eventid: int
     event_name: str
     event_description: str
     event_url: str
@@ -159,32 +182,83 @@ class AddEventsRequest(BaseModel):
     organizer_name: str
     organizer_website: str
 
-class GetFriendRecommendations(BaseModel):
+class AddForumsRequest(BaseModel):
+    title: str
     username: str
+    datetime: str
+    description: str
+    code: str
+    comments: List[Dict[str, str]]
+    interests: List[str]
+
+class AddPostRequest(BaseModel):
+    title: str
+    username: str
+    description: str
+    code: str
+    comments: List[Dict[str, str]]
+    interests: List[str]
+
+class AddCommentRequest(BaseModel):
+    title: str
+    username: str
+    description: str
 
 # ------------------ Routes ------------------
+
+@app.get("/getRandomProfiles")
+def get_random_profiles():
+    """
+    Gets random profiles to show on the holding page.
+    """
+    try:
+        return {'success': True, 'message': "Successfully signed up."}
+    except HTTPException as e:
+        raise e 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/getRandomEvents")
+def get_random_events():
+    """
+    Gets random events to show on the holding page.
+    """
+    try:
+        return {'success': True, 'message': "Successfully signed up."}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/signUp")
 def signup(request: UserDetailsRequest):
     """
-    Creates a new account for the user if their username and password are valid.
+    Creates a new account for the user in the graph and vector dbs if their username and password are valid.
     """
     try:
         password_check = validate_password(request.password)
-        if password_check[0]:
+        if not password_check[0]:
             raise HTTPException(status_code=400, detail=password_check[1])
 
-        user_data = request.dict()
+        user_data = request.model_dump()
         user_data['password'] = hash_password(request.password)
+        user_data['birth_date'] = user_data['birth_date']
 
-        res = qm.create_user(user_data)
-        if res['success']:
-            return {'success': True, 'message': "Successfully signed up."}
-        raise HTTPException(status_code=400, detail=res['message'])
+        res = db.create_user(user_data)
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+            
+        data = {
+            'contents': [request.interests],
+            'ids': [request.username]
+        }
+        res = access_friends_recommendation('store', data)
+        if res.status_code != 200:
+            return res
+        return {'success': True, 'message': "Successfully signed up."}
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Signup error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -194,7 +268,7 @@ def login(request: LoginRequest):
     Redirects users to Spotify's login page for authentication after verifying username and password.
     """
     try:
-        res = qm.attempt_login({
+        res = db.attempt_login({
             'username': request.username,
             'password': hash_password(request.password)
         })
@@ -204,24 +278,23 @@ def login(request: LoginRequest):
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Login error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/getUser")
+@app.post("/getUser")
 def get_user(request: GetUserRequest):
     """
     Gets user information for profile page.
     """
     try:
-        res = qm.get_user(request.dict())
+        print(request)
+        res = db.get_user(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Update user error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -231,31 +304,29 @@ def update_user(request: UserDetailsRequest):
     Updates users' details in the db.
     """
     try:
-        res = qm.update_user(request.dict())
+        res = db.update_user(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Update user error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/addFriend")
-def add_friend(request: FriendRequest):
+@app.post("/addFriend")
+def add_friend(request: FriendshipRequest):
     """
     Adds a friend for a user.
     """
     try:
-        res = qm.add_friend(request.dict())
+        res = db.create_friendship(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add friend error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
@@ -265,123 +336,210 @@ def get_friends(request: GetUserRequest):
     Gets all friends for a user.
     """
     try:
-        user_details = qm.get_user(request.dict())
+        user_details = db.get_user(request.model_dump())
         if not user_details['success']:
             raise HTTPException(status_code=400, detail=user_details['message'])
-        friend_details = [qm.get_user(friend) for friend in user_details['friends']]
-        return {'success': True, 'friends': friend_details}
+        friend_details = [db.get_user(friend) for friend in user_details['friends']]
+        return {'success': True, 'message': 'Friends retrieved successfully', 'friends': friend_details}
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get friends error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/removeFriend")
-def remove_friend(request: FriendRequest):
+@app.get("/getFriendRecommendations")
+def get_friend_recommendations(request: GetUserRequest):
+    """
+    Gets friend recommendations for a user based on interests using similarity search algorithm.
+    """
+    try:
+        interests = db.get_user_interests(request.model_dump())
+        if not interests['success']:
+            raise HTTPException(status_code=500, detail=interests['message'])
+        data = {
+            'contents': interests[data],
+            'ids': [request.username],
+            'top_n': 5
+        }
+        res = access_friends_recommendation('retrieve', data)
+        if res.status_code != 200:
+            return res
+        
+        recommendations = {'recommendations': []}
+        for user, users in res.items():
+            for username, dist in users:
+                recommendations['recommendations'].append(db.get_user(username))
+        recommendations['success'] = True
+        recommendations['message'] = 'Retrieved friend recommendations successfully.'
+        return recommendations
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/removeFriend")
+def remove_friend(request: FriendshipRequest):
     """
     Removes a friend for a user.
     """
     try:
-        res = qm.remove_friend(request.dict())
+        res = db.delete_friendship(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Remove friend error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}.")
 
 
-@app.get("/addEvents")
+@app.post("/addEvents")
 def add_events(request: AddEventsRequest):
     """
     Creates an event from users through the UI.
     """
     try:
-        res = qm.update_events(request.dict())
+        res = db.create_or_update_event(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
-        return res
+        
+        data = {
+            'contents': [request.model_dump()],
+            'ids': [request.username]
+        }
+        res = access_events_recommendation('store', data)
+        if res.status_code != 200:
+            return res
+        return {'success': True, 'message': "Events added successfully."}
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Add events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
- 
-@app.get("/getEvents")
-def get_events(request: GetEventsRequest):
+
+@app.get("/getEventRecommendations")
+def get_event_recommendations(request: GetUserRequest):
     """
-    Gets events to display on 'Events' page with event information.
+    Gets event recommendations for a user based on interests using similarity search algorithm.
     """
     try:
-        res = qm.get_events({'username': request.username})  # TODO: Query recommendationn system first
-        if not res['success']:
-            raise HTTPException(status_code=400, detail=res['message'])
-        return res
+        interests = db.get_user_interests(request.model_dump())
+        if not interests['success']:
+            raise HTTPException(status_code=500, detail=interests['message'])
+        data = {
+            'contents': interests[data],
+            'ids': [request.username],
+            'top_n': 10
+        }
+        res = access_events_recommendation('retrieve', data)
+        if res.status_code != 200:
+            return res
+        
+        print(interests, "interests")
+        
+        recommendations = {'recommendations': []}
+        for user, users in res.items():
+            for username, dist in users:
+                recommendations['recommendations'].append(db.get_user(username))
+        recommendations['success'] = True
+        return recommendations
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@app.get("/joinEvents")
+@app.post("/joinEvents")
 def join_events(request: JoinEventsRequest):
     """
     Adds an event for the user.
     """
     try:
-        res = qm.join_events(request.dict())
+        res = db.join_events(request.model_dump())
         if not res['success']:
             raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Join events error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@app.get("/getFriendRecommendations")
-def get_friend_recommendations(request: GetFriendRecommendations):
+@app.post("/addPost")
+def add_post(request: AddPostRequest):
     """
-    Gets friend recommendations for a user based on interests using similarity search algorithm (cosine?).
+    Creates a post for the forum page.
     """
     try:
-        interests = qm.get_user(request.dict())
-        if not interests['success']:
-            raise HTTPException(status_code=400, detail=interests['message'])
-        data = {
-            'contents': [interests['interests']],
-            'ids': [request.username]
-        }
-        recommendations = make_recommendation_request(data)
+        res = db.create_thread(request.model_dump())
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
         return res
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Get friend recommendations error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-def update_events():
+@app.post("/addComment")
+def add_comment(request: AddCommentRequest):
     """
-    Function to update the database with events once a day based on scheduler
+    Adds a comment under the post on the forum page.
     """
     try:
-        events = em.get_events()
-        for idx, event in enumerate(events):
-            event['venue_region'] = get_nearest_region(event.get('venue_lat'), event.get('venue_long'))
-            event['type'] = 'Networking'  # how should we extract event type
-            event['verified'] = True
-            qm.update_events(event)
-            logging.info(f"Daily event {idx} update successful.")
+        res = db.create_comment(request.model_dump())
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logging.error(f"Error updating events: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# @app.get("/getPosts")
+# def get_posts(request: GetUserRequest):
+#     """
+#     Gets post recommendations for the forum page using a recommendation system?.
+#     """
+#     try:
+#         interests = db.get_user_interests(request.model_dump())
+#         if not interests['success']:
+#             raise HTTPException(status_code=500, detail=interests['message'])
+#         data = {
+#             'contents': interests[data],
+#             'ids': [request.username]
+#         }
+#         res = make_recommendation_request('retrieve', data)
+        # if res.status_code != 200:
+        #     return res
+        
+#         recommendations = {'recommendations': []}
+#         for user, users in res.items():
+#             for username, dist in users:
+#                 recommendations['recommendations'].append(db.get_user(username))
+#         recommendations['success'] = True
+#         return recommendations
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+# def update_events():
+#     """
+#     Function to update the database with events once a day based on scheduler
+#     """
+#     try:
+#         events = em.get_events()
+#         for idx, event in enumerate(events):
+#             event['venue_region'] = get_nearest_region(event.get('venue_lat'), event.get('venue_long'))
+#             event['type'] = 'Networking'  # how should we extract event type
+#             db.create_or_update_event(event)
+#             logging.info(f"Daily event {idx} update successful.")
+#     except Exception as e:
+#         logging.error(f"Error updating events: {e}")
 
 # Schedule the update to run daily at midnight
-scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
-scheduler.start()
+# scheduler.add_job(update_events, 'interval', days=1, next_run_time=datetime.now())
+# scheduler.start()

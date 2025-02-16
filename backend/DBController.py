@@ -15,23 +15,27 @@ class DBController:
 		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)]
         Output:     None
         '''
-        self.qm.create_user(json)
-        for topic, weightage in json['interests']:
-            interest_json = {
-                'username': json['username'],
-                'topic': topic,
-                'weightage': weightage
-            }
-            self.qm.create_user_interested_topic(interest_json)
+        try:
+            self.qm.create_user(json)
 
-        for topic, weightage in json['skills']:
-            skill_json = {
-                'username': json['username'],
-                'topic': topic,
-                'weightage': weightage
-            }
-            self.qm.create_user_skilled_topic(skill_json)
-    
+            for topic, weightage in json.get("interests", []):
+                self.qm.create_user_interested_topic({
+                    "username": json["username"],
+                    "topic": topic,
+                    "weightage": weightage
+                })
+
+            for topic, weightage in json.get("skills", []):
+                self.qm.create_user_skilled_topic({
+                    "username": json["username"],
+                    "topic": topic,
+                    "weightage": weightage
+                })
+
+            return {"success": True, "message": "User created successfully"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
     def update_user(self, json):
         '''
         Function:   Updates fields of a User Node
@@ -39,24 +43,28 @@ class DBController:
 		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)]
         Output:     None
         '''
-        self.qm.update_user(json)
-        self.qm.delete_user_interests_skills(json)
-        for topic, weightage in json['interests']:
-            interest_json = {
-                'username': json['username'],
-                'topic': topic,
-                'weightage': weightage
-            }
-            self.qm.create_user_interested_topic(interest_json)
+        try:
+            self.qm.update_user(json)
+            self.qm.delete_user_interests_skills(json)
 
-        for topic, weightage in json['skills']:
-            skill_json = {
-                'username': json['username'],
-                'topic': topic,
-                'weightage': weightage
-            }
-            self.qm.create_user_skilled_topic(skill_json)
-    
+            for topic, weightage in json.get("interests", []):
+                self.qm.create_user_interested_topic({
+                    "username": json["username"],
+                    "topic": topic,
+                    "weightage": weightage
+                })
+
+            for topic, weightage in json.get("skills", []):
+                self.qm.create_user_skilled_topic({
+                    "username": json["username"],
+                    "topic": topic,
+                    "weightage": weightage
+                })
+
+            return {"success": True, "message": "User updated successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
     def get_user(self, json):
         '''
         Function:   Gets public user data given username
@@ -64,20 +72,27 @@ class DBController:
         Output:     JSON with username, email, birth_date (datetime), gender, region
 		            about_me, linkedin_url, github_url,  interests: [(name of topic, weightage)], skills: [(<same as interests>)] 
         '''
-        user = self.qm.get_user(json)[0].data()['u']
-        del user['password']
-        user['birth_date'] = user['birth_date'].to_native()
-        return user 
-    
+        try:
+            user = self.qm.get_user(json)[0].data()["u"]
+            user.pop("password", None)  # Safer way to remove password
+            user["birth_date"] = user["birth_date"].to_native()
+
+            return {"success": True, "message": "Successfully retrieved user data", "data": user}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
     def get_user_interests(self, json):
         '''
         Function:   Gets list of user interest based on a hardcoded threshold for model to recommend
         Input:      JSON with username
         Output:     JSON with list of interest
         '''
-        json['threshold'] = 0.5
-        data = [i.data()['topic'] for i in self.qm.get_user_interests(json)]
-        return {'content': data}
+        try:
+            json["threshold"] = 0.5
+            data = [i.data()["topic"] for i in self.qm.get_user_interests(json)]
+            return {"success": True, "data": data}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
     def attempt_login(self, json):
         '''
@@ -85,27 +100,35 @@ class DBController:
         Input:      JSON with username and password (hashed)
         Output:     JSON with success (boolean)
         '''
-        res = self.qm.attempt_login(json)
-        if len(res) == 0:
-            return {'success': False}
-        else:
-            return {'success': True}
-    
+        try:
+            res = self.qm.attempt_login(json)
+            return {"success": len(res) > 0}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
     def create_friendship(self, json):
         '''
         Function:   Makes two users friends
         Input:      JSON with username1 and username2
         Output:     None
         '''
-        self.qm.create_friendship(json)
+        try:
+            self.qm.create_friendship(json)
+            return {"success": True, "message": "Friend added successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
-    def delete_friendship(self, json):
+    def delete_friendship(self, json: dict) -> dict:
         '''
         Function:   Makes two users no longer friends
         Input:      JSON with username1 and username2
         Output:     None
         '''
-        self.qm.delete_friendship(json)
+        try:
+            self.qm.delete_friendship(json)
+            return {"success": True, "message":"Friend removed successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
     ## EVENT METHODS
 
@@ -117,10 +140,105 @@ class DBController:
                     organizer_name, organizer_website
         Output:     None
         '''
-        self.qm.create_or_update_event(json)
-        self.qm.create_event_to_topic(json)
-        self.qm.create_event_to_type(json)
+        try:
+            self.qm.create_or_update_event(json)
+            self.qm.create_event_to_topic(json)
+            self.qm.create_event_to_type(json)
 
+            return {"success": True, "message": "Event changed successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    def get_events(self):
+        '''
+        Function:   Get events 
+        Input:      None
+        Output:     JSON of events (list of dict)
+        '''
+        try:
+            data = [event.data() for event in self.qm.get_events()]
+            for event in data:
+                event['e']['type'] = event['type']
+                event['e']['category'] = event['topic']
+            return {"success": True, "message": "Events retrieved successfully.", "events": [event['e'] for event in data]}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+    
+    ## THREADS
+
+    def create_thread(self, json):
+        '''
+        Function:   Create a new thread
+        Input:      JSON with title username description code interest (list of string)
+        Output:     None
+        '''
+        try:
+            json['datetime'] = datetime.datetime.now()
+            self.qm.create_thread(json)
+            self.qm.create_thread_to_user(json)
+            for interest in json['interests']:
+                self.qm.create_thread_to_topic({
+                    'title': json['title'], 
+                    'topic': interest
+                })
+            return {"success": True, "message": "Thread created successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+    
+    def create_comment(self, json):
+        '''
+        Function:   Create comments for thread
+        Input:      JSON with title, username, description
+        Output:     None
+        '''
+        try:
+            json['datetime'] = datetime.datetime.now()
+            self.qm.create_comment(json)
+            return {"success": True, "message": "Comment created successfully."}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    def get_thread(self, json):
+        '''
+        Function:   Gets details of one thread
+        Input:      JSON with title
+        Output:     JSON with stuff
+        '''
+        try:
+            threads = [thread.data() for thread in self.qm.get_thread(json)]
+            comments = [comment.data() for comment in self.qm.get_comments_from_thread(json)]
+            topics = [topic.data() for topic in self.qm.get_topics_from_thread(json)]
+
+            output = threads[0]['th']
+            output['datetime'] = output['datetime'].to_native()
+            output['username'] = threads[0]['username']
+            output['comments'] = []
+            for i in comments:
+                comment = i['c']
+                comment['username'] = i['username']
+                comment['datetime'] = comment['datetime'].to_native()
+                output['comments'].append(comment)
+            
+            output['interests'] = []
+            for i in topics:
+                output['interests'].append(i['name'])
+
+            return {'success': True, 'comment': 'Thread retrieved successfully', 'thread': output}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+        
+
+    def get_threads(self):
+        '''
+        Function:   Gets all threads and their creator
+        Input:      None
+        Output:     JSON with threads which is a list of dict with title and username
+        '''
+        try:
+            data = [thread.data() for thread in self.qm.get_threads()]
+            return {'success': True, 'comment': 'Threads retrieved successfully', 'threads': output}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
 if __name__ == "__main__":
     dbc = DBController()
@@ -176,3 +294,18 @@ if __name__ == "__main__":
     # print(a)
     # dbc.create_friendship({'username1': 'test', 'username2': 'test2'})
     # dbc.delete_friendship({'username1': 'test', 'username2': 'test2'})
+    # print(dbc.get_events())
+    # dbc.create_thread({
+    #     "title": 'test',
+    #     "username": 'test',
+    #     "description": "i ",
+    #     "code": "str",
+    #     "interests": ["SoftwareEngineering"]
+    # })
+    # dbc.create_comment({
+    #     "title": 'test',
+    #     "username": "test2",
+    #     "description": "aaa"
+    # })
+    # print(dbc.get_thread({'title': 'test'}))
+    # print(dbc.get_threads())

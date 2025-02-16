@@ -1,0 +1,179 @@
+1. signUp
+    username: str
+    password: str
+    email: str
+    birth_date: str
+    age: int
+    gender: str
+    region: str
+    about_me: str
+    linkedin_url: str
+    github_url: str
+    skills: list
+    interests: list
+
+success -> {'success': True, 'message': "Successfully signed up."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+
+2. login
+    username: str
+    password: str
+
+success -> {'success': True, 'message': "Login successful."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+
+3. getUser
+    username: str
+
+success -> {'success': True, 'message': "Successfully retrieved user data.",
+    username: str,
+    email: str,
+    birth_date: str,
+    age: int,
+    gender: str,
+    region: str,
+    about_me: str,
+    linkedin_url: str,
+    github_url: str,
+    skills: list,
+    interests: list
+}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+4. updateUser
+    username: str
+    password: str
+    email: str
+    birth_date: str
+    age: int
+    gender: str
+    region: str
+    about_me: str
+    linkedin_url: str
+    github_url: str
+    skills: list
+    interests: list
+
+success -> {'success': True, 'message': "User updated successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+5. addFriend
+    username1: str
+    username1: str
+
+success -> {'success': True, 'message': "Friend added successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+6. getFriends
+    username: str
+
+success -> {'success': True, 'message': "Friends retrieved successfully."
+    username: str,
+    email: str,
+    birth_date: str,
+    age: int,
+    gender: str,
+    region: str,
+    about_me: str,
+    linkedin_url: str,
+    github_url: str,
+    skills: list,
+    interests: list
+}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+7. removeFriend
+    username1: str
+    username1: str
+
+success -> {'success': True, 'message': "Friend removed successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+8. addEvents
+    eventid: int
+    event_name: str
+    event_description: str
+    event_url: str
+    event_logo: str
+    starttime_local: str
+    endtime_local: str
+    is_free: str
+    is_online: str
+    category: str
+    venue_location: str
+    organizer_name: str
+    organizer_website: str
+
+success -> {'success': True, 'message': "Event changed successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+9. joinEvents
+    username: str
+    event_id: str
+
+success -> {'success': True, 'message': "Event joined successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+
+
+New:
+10. getFriendRecommendations
+    username: str
+
+success -> {'success': True, 'message': "Retrieved friend recommendations successfully.",
+	'recommendations': [{
+		username: str,
+    		email: str,
+    		birth_date: str,
+    		age: int,
+    		gender: str,
+    		region: str,
+    		about_me: str,
+    		linkedin_url: str,
+    		github_url: str,
+    		skills:list,
+    		interests: list	
+	}]
+}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+11. getEventRecommendations
+    username: str
+
+success -> {'success': True, 'message': "Retrieved event recommendations successfully.",
+	'recommendations': [{
+	
+	}]
+}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+12. addPost
+    title: str
+    username: str
+    description: str
+    code: str
+    comments: list[dict]
+    interests: list[str]
+
+success -> {'success': True, 'message': "Post created successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+13. addComment
+    title: str
+    username: str
+    comment: str
+
+success -> {'success': True, 'message': "Comment added successfully."}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')
+
+14. getPostRecommendations
+    username: str
+
+success -> {'success': True, 'message': "Retrieved event recommendations successfully.",
+	'recommendations': [{
+	
+	}]
+}
+failure -> HTTPException(500, detail='<error message>') or HTTPException(400, detail='<error message>')

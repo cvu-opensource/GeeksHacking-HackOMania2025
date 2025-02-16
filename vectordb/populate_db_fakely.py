@@ -5,6 +5,8 @@ import pydantic
 from faker import Faker
 from pydantic import BaseModel
 from typing import List, Optional
+from faker import Faker
+
 
 def sample_strings_from_dict(dictionary, n):
     # Get all keys from the dictionary
@@ -50,19 +52,19 @@ for i in range(500):
     contents: List[str]
     top_n: Optional[int]
 
-# for idx, profile in enumerate(ai_generated_profiles):
-#     print(profile)
-# response = requests.post(
-#     url='http://localhost:8000/store',
-#     json={
-#         'contents': ai_generated_profiles,
-#         'ids':[str(random.getrandbits(16)) for i in range(len(ai_generated_profiles))]
-#     }
-# )
-# print(response.content)
+for idx, profile in enumerate(ai_generated_profiles):
+    print(profile)
+response = requests.post(
+    url='http://localhost:8002/store',
+    json={
+        'contents': ai_generated_profiles,
+        'ids':[str(random.getrandbits(16)) for i in range(len(ai_generated_profiles))]
+    }
+)
+print(response.content)
 
 response = requests.post(
-    url='http://localhost:8000/retrieve',
+    url='http://localhost:8002/retrieve',
     json={
         'contents': [
             ['ai', 'deep learning', 'python', 'cooking', 'gym'],
