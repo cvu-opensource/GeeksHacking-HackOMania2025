@@ -212,7 +212,10 @@ def get_random_profiles():
     Gets random profiles to show on the holding page.
     """
     try:
-        return {'success': True, 'message': "Successfully signed up."}
+        res = db.get_random_users()
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
     except HTTPException as e:
         raise e 
     except Exception as e:
@@ -224,7 +227,10 @@ def get_random_events():
     Gets random events to show on the holding page.
     """
     try:
-        return {'success': True, 'message': "Successfully signed up."}
+        res = db.get_random_events()
+        if not res['success']:
+            raise HTTPException(status_code=400, detail=res['message'])
+        return res
     except HTTPException as e:
         raise e
     except Exception as e:

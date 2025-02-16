@@ -123,9 +123,10 @@ class DBController:
                 indices.add(random.randint(0, len(users) - 1))
             
             userdata = [self.qm.get_user({'username': users[i]})[0].data()['u'] for i in indices]
+            
             for ud in userdata:
                 ud.pop("password", None)
-            return {"success": True, "data": {"users": [self.qm.get_user({'username': users[i]})[0].data() for i in indices]}}
+            return {"success": True, "data": {"users": [userdata[i] for i in indices]}}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
