@@ -27,7 +27,7 @@ class QueryManager:
         '''
         query = """
             MATCH (u:User {username: $username})
-            MATCH (t:Topic {name: $topic})
+            MERGE (t:Topic {name: $topic})
             CREATE (u)-[:INTERESTED_IN {weightage: $weightage}]->(t)
         """
         self.db.execute_query(query, json)
@@ -38,7 +38,7 @@ class QueryManager:
         '''
         query = """
             MATCH (u:User {username: $username})    
-            MATCH (t:Topic {name: $topic})
+            MERGE (t:Topic {name: $topic})
             CREATE (u)-[:SKILLED_IN {weightage: $weightage}]->(t)
         """
         self.db.execute_query(query, json)
@@ -98,6 +98,16 @@ class QueryManager:
         """
         return self.db.execute_query(query, json)
     
+    def get_usernames(self):
+        '''
+        returns all usernames in db
+        '''
+        query = """
+            MATCH (u:User)
+            RETURN u.username AS username
+        """
+        return self.db.execute_query(query, {})
+
     def create_friendship(self, json):
         '''
         creates a friend relationship between two users
