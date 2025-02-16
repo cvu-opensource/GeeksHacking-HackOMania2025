@@ -38,7 +38,7 @@ async def startup():
     EMBEDDER = os.getenv("EMBEDDER", "mxbai-embed-large")
     DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "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")
     DISTANCE_TYPE = os.getenv("DISTANCE_TYPE", "ip")
-    CLIENT = OpenAI(api_key="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", base_url="https://openrouter.ai/api/v1")
+    CLIENT = OpenAI(api_key="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", base_url="https://openrouter.ai/api/v1")
     LLM = os.getenv('LLM', 'deepseek-r1:8b')
 
     # We assume ollama is running with default ports exposed on the host machine. A terrible assumption to make!
@@ -55,18 +55,23 @@ def health_check():
 def user_query_event(query: DescriptionQuery):
     dict = {}
     user_dicts, user_ids, top_n = query.contents, query.ids, query.top_n
-    sys_prompt = """
-        You will recieve a python dictionary specifying the details of a person.
-        Output the most likely type of event that this user would be interested in attending.
-        Format your output in a short paragraph (at most 100 words) describing such an event.
+    sys_prompt_a = """
+    You will recieve a python dictionary specifying the details of a person.
+    Output the most likely type of event that this user would be interested in attending.
     """
+
+    sys_prompt_b = """
+    Format your output in a short paragraph (at most 100 words) describing such an event. Start 
+    this output paragraph with a <newline> token.
+    """
+        
     for user_dict, user_id in zip(user_dicts, user_ids):
         completion = CLIENT.chat.completions.create(
             model="deepseek/deepseek-r1:free",
             messages=[
                 {
                 "role": "system",
-                "content": sys_prompt + str(user_dict)
+                "content": sys_prompt_a + '{' + str(user_dict) + '}' + sys_prompt_b
                 }
             ]
         )
@@ -82,23 +87,27 @@ def user_query_event(query: DescriptionQuery):
 @app.post("/store_events")
 def event_embed(query: DescriptionQuery):
     event_dicts, event_ids = query.contents, query.ids
-    sys_prompt = """
-        You will recieve a python dictionary specifying details of an event.
-        Reason what the event might be about, based on the provided context and your own 
-        reasoning. Do not hallucinate properties about the event. Output
-        a paragraph (at most 100 words) summarizing the event.
+    sys_prompt_a = """
+    You will recieve a python dictionary specifying the details of a person.
+    Output the most likely type of event that this user would be interested in attending.
     """
-    response = []
+
+    sys_prompt_b = """
+    Format your output in a short paragraph (at most 100 words) describing such an event. Start 
+    this output paragraph with a <newline> token.
+    """
+        
     for event_dict, event_id in zip(event_dicts, event_ids):
         completion = CLIENT.chat.completions.create(
             model="deepseek/deepseek-r1:free",
             messages=[
                 {
                 "role": "system",
-                "content": sys_prompt + str(event_dict)
+                "content": sys_prompt_a + '{' + str(event_dict) + '}' + sys_prompt_b
                 }
             ]
         )
+        print('\n \n retrieving completion,', completion)
         query = completion.choices[-1].message.content
         print('before splitting', query)
         query = query.split("\n")[-1]

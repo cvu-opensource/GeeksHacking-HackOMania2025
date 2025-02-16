@@ -33,12 +33,12 @@ async def startup():
     global CLIENT
     # Access environment variables
 
-    DB_PATH = os.getenv("DB_PATH", "./data")
-    COLLECTION_NAME = os.getenv("COLLECTION_NAME", "descriptions")
+    DB_PATH = "/vectordb/events_data"
+    COLLECTION_NAME = "events"
     EMBEDDER = os.getenv("EMBEDDER", "mxbai-embed-large")
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "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")
+    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-d7df39a3927742d1bd714a7571191a69")
     DISTANCE_TYPE = os.getenv("DISTANCE_TYPE", "ip")
-    CLIENT = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://openrouter.ai/api/v1")
+    CLIENT = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
     LLM = os.getenv('LLM', 'deepseek-r1:8b')
 
     # We assume ollama is running with default ports exposed on the host machine. A terrible assumption to make!
