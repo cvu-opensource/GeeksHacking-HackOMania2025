@@ -1,6 +1,7 @@
 # Environments
 venv
 __pycache__
+/backend/__pycache__
 .env
 
 # Files

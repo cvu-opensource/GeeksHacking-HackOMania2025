@@ -236,7 +236,7 @@ class DBController:
         '''
         try:
             data = [thread.data() for thread in self.qm.get_threads()]
-            return {'success': True, 'comment': 'Threads retrieved successfully', 'threads': output}
+            return {'success': True, 'comment': 'Threads retrieved successfully', 'threads': data}
         except Exception as e:
             return {"success": False, "message": str(e)}
 
@@ -308,4 +308,4 @@ if __name__ == "__main__":
     #     "description": "aaa"
     # })
     # print(dbc.get_thread({'title': 'test'}))
-    # print(dbc.get_threads())
+    print(dbc.get_threads())
