@@ -2,15 +2,15 @@
 ## HackOMania 2025 - Product of Team Perchance
 
 ## **Overview**
-This project was developed during the **HackOMania 2025 Hackathon organised by GeeksHacking**. Out of 3 problem statements, we chose to tackle the **'Geek Connect: Find Your Tribe IRL'** challenge, where participants were invited to _build a platform that fosteres real-world connections within the Geek community_.
+This project was developed during the **HackOMania 2025 Hackathon organized by GeeksHacking**. Out of 3 problem statements, we chose to tackle the **'Geek Connect: Find Your Tribe IRL'** challenge, where participants were invited to _build a platform that fosters real-world connections within the Geek community_.
 
-**GeekedIn** is a platform designed to help geeks connect based on their interests, enabling collaboration, in-person interactions, and event discovery. It focuses on being an all-in-one platform that adopts and integrates the best features of other websites, including a community forum page, challenges of the day, event finder with an interactive map and so on. It also goes beyond simple networking by modeling deep relationships between people, events, and products, powered by a custom recommendation algorithm that leverages similarity search.
+**GeekedIn** is a platform designed to help geeks connect based on their interests, enabling collaboration, in-person interactions, and event discovery. It focuses on being an **all-in-one platform** that adopts and integrates the best features of other websites, including a community forum page, challenges of the day, an event finder with an interactive map, and more. It also goes beyond simple networking by modeling deep relationships between people, events, and products, powered by a custom recommendation algorithm that leverages similarity search.
 
 ### **Key Features**  
 ✅ **Dynamic UI** – Built with TypeScript and deployed on Node.js, featuring four main interactive pages:  
 - 🏠 **Main Page** – Discover posts by fellow geeks, compete to complete daily challenges or connect with similar geeks
-- 📅 **Events** – Find local meetups and tech gatherings organised by organisations or fellow geeks
-- 💬 **Forums** – Engage in geeky discussions, seek guidance or share ideas with one another
+- 📅 **Events** – Find local meetups and tech gatherings organized by organizations or fellow geeks
+- 💬 **Forums** – Engage in geeky discussions, seek guidance, or share ideas
 - 👤 **Profile** – Customize and manage your personal geek profile, sharing your projects, events, skills and aspirations
 
 ✅ **Graph-Based Backend** – Neo4j serves as the core database, storing:    
@@ -18,18 +18,18 @@ This project was developed during the **HackOMania 2025 Hackathon organised by G
 - 👥 **Users** – Modeled as nodes with profile information and linked to interests
 - 🎟️ **Events** – Event nodes linked to users and interest categories  
 - 💬 **Forums** – Thread/forum nodes with comments, linked to users and interest categories    
-- 🔗 **Relationships** – Mapped between users, events, threads/forums and shared interests  
+- 🔗 **Relationships** – Mapped between users, events, threads/forums, and shared interests  
 
-✅ **Automated Event Updates** – EventManager service syncs with websites using webscraping and website APIs
-- Webscraping is done to extract event ids from websites like Eventbrite (relevant Eventbrite API for this is deprecated)
-- **Eventbrite API** (with event ids) is used to pull relevant information of events (name, location, datetime, cost, categories etc)
+✅ **Automated Event Updates** – EventManager service syncs with websites using web scraping and website APIs
+- Web scraping is done to extract event IDs from websites like Eventbrite (relevant Eventbrite API for this is deprecated)
+- **Eventbrite API** (with event IDs) is used to pull relevant information about events (name, location, datetime, cost, categories, etc)
 - Neo4j DB and VectorDB get updated after data is processed
 - Only runs once a day using **APScheduler** due to long processing time
 
 ✅ **AI-Powered Recommendations** – A Chroma Vector DB and Deepseek-R1 collaboration
 - **Chroma Vector DB** stores latent representations of users and events each time it is created
-- Following user events, the recommendation system takes the user's profile (age, gender, interests etc) and plugs it into **Deepseek-R1**
-- Deepseek returns a description of the type of events/profiles the user most likely inteact with
+- Following user events, the recommendation system takes the user's profile (age, gender, interests, etc) and plugs it into **Deepseek-R1**
+- Deepseek returns a description of the type of events/profiles the user is most likely interact with
 - Description is vectorized and put into vector space to complete **cosine similarity search** for recommended events/profiles
 
 ## **Architecture**
@@ -103,7 +103,7 @@ docker run -d -p 127.0.0.1:8001 <image id>
 🚀 **Potential future improvements include:**  
 - 🔎 **Continue implementing thread and comment recommendations** to enhance forum engagement  
 - 📝 **Optimized recommendation algorithms** refined via user feedback over time
-- 📈 **Better Graph based search** to aid recommendations
+- 📈 **Better Graph-based search** to aid recommendations
 - 🏆 **Gamification** of user interactions/contributions 
 - 🏳️ **Clans/Tribes** for users to join (of varying capacities) for closer relationships
 
